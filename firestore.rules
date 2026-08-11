@@ -38,7 +38,7 @@ service cloud.firestore {
         && request.resource.data.discordId is string
         && request.resource.data.discordId.size() > 0
         && request.resource.data.steamId is string
-        && request.resource.data.streamLink is string
+        && (!('streamLink' in request.resource.data) || request.resource.data.streamLink is string)
         && request.resource.data.submittedAt is string
         && request.resource.data.status == 'pending'
         && !('adminComment' in request.resource.data)
@@ -53,7 +53,7 @@ service cloud.firestore {
       // ผู้สมัครคนอื่นแม้จะไม่มีสิทธิ์แอดมินจริง
       allow update: if
         request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy'])
+          .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment'])
         && request.resource.data.status in
           ['pending', 'approved', 'rejected', 'needs_revision']
         && request.resource.data.adminComment is string
