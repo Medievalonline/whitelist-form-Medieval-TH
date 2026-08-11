@@ -1,0 +1,14 @@
+{
+  "name": "discord-role-sync",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-discord-roles.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}

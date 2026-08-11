@@ -1,0 +1,79 @@
+rules_version = '2';
+
+// ====================================================================
+// Firestore Security Rules — ระบบสมัคร Whitelist (collection: applications)
+// นำไปวางที่ Firebase Console > Firestore Database > Rules
+// (หรือ deploy ด้วย `firebase deploy --only firestore:rules` ถ้าใช้ Firebase CLI)
+//
+// ⚠️ ข้อจำกัดที่ควรรู้:
+// ระบบนี้ยืนยันตัวตนแอดมินด้วย Discord OAuth ฝั่ง browser ล้วน ๆ (ไม่มี
+// Firebase Authentication ผูกอยู่) Firestore Rules จึงไม่มีทางรู้ "ใครคือ
+// แอดมินจริง" ได้ — ทำได้แค่จำกัด "ทำอะไรได้บ้าง" กับข้อมูล ไม่ใช่ "ใครทำได้"
+// กฎชุดนี้จึงเน้นปิดช่องทางทำลาย/แก้ไขข้อมูลที่ร้ายแรงที่สุด (เขียนทับข้อมูล
+// ใบสมัครคนอื่น, ปลอมผลตรวจสอบแบบข้ามขั้นตอน, ลบข้อมูลที่ยังไม่ได้ตรวจสอบ)
+// แต่ "list ทั้ง collection" ยังเปิดอยู่เพราะ admin.html ต้องใช้แสดงรายการ
+// ถ้าต้องการปิดช่องนี้แบบเข้มจริง (ให้เฉพาะทีมงานที่ login ถูกต้องเท่านั้น
+// list/read ได้) ต้องเพิ่ม Firebase Authentication + Cloud Function ที่
+// ตรวจสอบ Discord access token ฝั่งเซิร์ฟเวอร์แล้วออก custom token/claim
+// ให้ — ทักมาได้ถ้าต้องการให้ช่วยต่อส่วนนี้
+// ====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /applications/{discordId} {
+
+      // ---- อ่านทีละใบ (status.html ใช้เช็คสถานะของตัวเอง) ----
+      allow get: if true;
+
+      // ---- อ่านทั้งหมด (admin.html ใช้แสดงรายการใบสมัคร) ----
+      // ยังเปิดกว้างตามข้อจำกัดด้านบน — เป็นความเสี่ยงที่เหลืออยู่โดยตั้งใจ
+      allow list: if true;
+
+      // ---- สร้างใบสมัครใหม่ ----
+      // บังคับ schema พื้นฐาน + ห้ามผู้สมัครตั้งค่าฟิลด์ผลตรวจสอบเอง
+      // (status ต้องเป็น 'pending' เท่านั้น, ห้ามมี adminComment/reviewedAt/reviewedBy)
+      allow create: if
+        discordId == request.resource.data.discordId
+        && request.resource.data.discordId is string
+        && request.resource.data.discordId.size() > 0
+        && request.resource.data.steamId is string
+        && request.resource.data.streamLink is string
+        && request.resource.data.submittedAt is string
+        && request.resource.data.status == 'pending'
+        && !('adminComment' in request.resource.data)
+        && !('reviewedAt' in request.resource.data)
+        && !('reviewedBy' in request.resource.data)
+        // กันเอกสารบวมผิดปกติ / spam field แปลกปลอม
+        && request.resource.data.size() < 20;
+
+      // ---- แก้ไขใบสมัคร (ทีมงานให้ผลตรวจสอบ) ----
+      // แก้ได้เฉพาะฟิลด์ผลตรวจสอบเท่านั้น ห้ามแตะ steamId/streamLink/answers/
+      // submittedAt/discordId ของใบสมัครเดิมเด็ดขาด — ปิดช่องแก้ไขข้อมูล
+      // ผู้สมัครคนอื่นแม้จะไม่มีสิทธิ์แอดมินจริง
+      allow update: if
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy'])
+        && request.resource.data.status in
+          ['pending', 'approved', 'rejected', 'needs_revision']
+        && request.resource.data.adminComment is string
+        && request.resource.data.reviewedBy is string;
+
+      // ---- ลบใบสมัคร ----
+      // ลบได้เฉพาะใบที่ถูกตัดสินว่า "ไม่ผ่านการพิจารณา" แล้วเท่านั้น —
+      // กันไม่ให้ใบที่ pending/approved/needs_revision ถูกลบทิ้งโดยไม่ตั้งใจ
+      // หรือถูกลบโดยคนที่ไม่ประสงค์ดี เงื่อนไข "เกิน 90 วัน" คุมที่ฝั่ง
+      // admin.html (ปุ่ม "ลบใบสมัคร Rejected เกิน 90 วัน") ไม่ได้บังคับใน
+      // rule นี้ เพราะ reviewedAt เก็บเป็น string (ISO date) ไม่ใช่ Firestore
+      // Timestamp จึงเทียบวันที่ในกฎได้ไม่สะดวก — ถ้าต้องการบังคับ 90 วันใน
+      // ระดับฐานข้อมูลจริง ต้องเปลี่ยนไปเก็บ reviewedAt เป็น Timestamp แทน
+      allow delete: if resource.data.status == 'rejected';
+    }
+
+    // ปิดกั้นทุก collection อื่นที่ไม่ได้ระบุไว้ (ค่าเริ่มต้นของ production
+    // mode ก็ปิดอยู่แล้ว แต่ประกาศชัดเจนไว้กันลืม)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
