@@ -531,8 +531,6 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     loadApplications();
   });
 
-  let refreshTimer = null;
-
   async function loginWithToken(token){
     const res = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: 'Bearer ' + token }
@@ -551,15 +549,12 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     panelWrap.style.display = 'block';
     document.getElementById('whoAmI').textContent = 'เข้าสู่ระบบในชื่อ: ' + staffUser.username;
     loadApplications();
-    // โหลดใบสมัครใหม่อัตโนมัติทุก 3 นาที ไม่ต้องรอกด "โหลดใหม่" เอง
-    // (การ์ดที่เปิดดูอยู่จะไม่ถูกหุบ เพราะ openKeys เก็บสถานะไว้ให้)
-    if(refreshTimer) clearInterval(refreshTimer);
-    refreshTimer = setInterval(loadApplications, 6000);
+    // หมายเหตุ: เอาการโหลดใหม่อัตโนมัติออกแล้วตามที่ขอ — หน้าเว็บจะไม่รีเฟรชข้อมูลเอง
+    // ผู้ใช้ต้องกดปุ่ม "โหลดใหม่" เองเมื่อต้องการข้อมูลล่าสุด
   }
 
   document.getElementById('logoutLink').addEventListener('click', ()=>{
     clearSession();
-    if(refreshTimer) clearInterval(refreshTimer);
     staffUser = null;
     authWrap.style.display = 'block';
     panelWrap.style.display = 'none';
