@@ -552,7 +552,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     // โหลดใบสมัครใหม่อัตโนมัติทุก 3 นาที ไม่ต้องรอกด "โหลดใหม่" เอง
     // (การ์ดที่เปิดดูอยู่จะไม่ถูกหุบ เพราะ openKeys เก็บสถานะไว้ให้)
     if(refreshTimer) clearInterval(refreshTimer);
-    refreshTimer = setInterval(loadApplications, 18000);
+    refreshTimer = setInterval(loadApplications, 6000);
   }
 
   document.getElementById('logoutLink').addEventListener('click', ()=>{
