@@ -489,9 +489,9 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           '<div class="field"><div class="label">Discord ID</div><div class="value">' + escapeHtml(record.discordId) + '</div></div>' +
           '<div class="field"><div class="label">Social Media</div><div class="value">' + escapeHtml(record.socialMedia || '-') + '</div></div>' +
           (isStreamer ? '<div class="field"><div class="label">ลิงก์ช่องทางการสตรีม</div><div class="value">' + escapeHtml(record.streamLink) + '</div></div>' : '') +
-          previousCommentHtml +
           reviewerInfoHtml +
           answersHtml +
+          previousCommentHtml +
           '<div class="review-row">' +
             '<select class="status-select">' +
               Object.keys(STATUS_LABELS).map(k=>'<option value="'+k+'"'+(record.status===k?' selected':'')+'>'+STATUS_LABELS[k].label+'</option>').join('') +
