@@ -932,9 +932,20 @@ const Storage = {
 
     // ถ้าเคยสมัครมาก่อน (ต้องแก้ไข / ไม่ผ่าน / รอตรวจสอบ) ให้ทำเครื่องหมายว่าเป็นการ "ส่งแก้ไขใหม่"
     // และเก็บความเห็นเดิมของทีมงานไว้อ้างอิง เผื่อยังตรวจใบใหม่ไม่เสร็จ
-    if(prevRecord){
+    //
+    // หมายเหตุ: ดึงใบสมัครเดิมมาใหม่อีกครั้งตรงนี้ (ไม่ใช้ prevRecord ที่ค้างมาจากตอน
+    // login) เพราะถ้าผู้เล่นเปิดแท็บทิ้งไว้นานแล้วทีมงานเพิ่งมาตรวจ/คอมเมนต์ระหว่างนั้น
+    // ค่าที่ค้างในหน่วยความจำเบราว์เซอร์จะเก่ากว่าความเป็นจริง ทำให้ความเห็นล่าสุดของ
+    // ทีมงานหลุดหายไม่ถูกส่งต่อเป็น previousComment (บั๊กเดิม)
+    let latestPrevRecord = prevRecord;
+    try{
+      const fresh = await Storage.getApplication(currentUser.id);
+      if(fresh) latestPrevRecord = fresh;
+    }catch(e){ /* ถ้าดึงไม่สำเร็จ ใช้ค่าที่มีอยู่แล้วแทน ดีกว่าบล็อกการส่งใบสมัคร */ }
+
+    if(latestPrevRecord){
       record.resubmittedAt = record.submittedAt;
-      if(prevRecord.adminComment) record.previousComment = prevRecord.adminComment;
+      if(latestPrevRecord.adminComment) record.previousComment = latestPrevRecord.adminComment;
     }
 
     submitBtn.disabled = true;

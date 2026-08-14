@@ -457,6 +457,9 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       const streamerBadge = isStreamer
         ? '<span class="status-pill" style="color:#c58bff; margin-right:8px;">📺 สตรีมเมอร์</span>'
         : '';
+      const prevCommentBadge = record.previousComment
+        ? '<span class="status-pill" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นเดิม">📝 มีความเห็นเดิม</span>'
+        : '';
       const previousCommentHtml = record.previousComment
         ? '<div class="field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
         : '';
@@ -479,7 +482,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
                 : '') +
             '</div>' +
           '</div>' +
-          '<div style="display:flex;align-items:center;">' + streamerBadge + resubmitBadge +
+          '<div style="display:flex;align-items:center;">' + streamerBadge + resubmitBadge + prevCommentBadge +
           '<div class="status-pill main-status" style="color:' + st.color + ';background:' + st.bg + ';border-color:' + st.bg + '">' + st.label + '</div></div>' +
         '</div>' +
         '<div class="app-card-body">' +
