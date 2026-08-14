@@ -111,6 +111,31 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 .save-status{ font-size:12.5px; color:#c7b990; }
 .empty-msg{ text-align:center; color:#c7b990; padding:40px 0; }
 .loading{ text-align:center; color:#c7b990; font-size:13px; padding:30px 0; }
+
+/* ---- เฉลยคำตอบ (answer key) ---- */
+.answerkey-btn{ background:rgba(63,111,150,0.18); border:1px solid var(--info-bright); color:#bfe0ff; padding:7px 14px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+.hint-box{ margin-top:8px; padding:9px 12px; background:rgba(47,81,112,0.12); border-left:3px solid var(--info-bright); border-radius:3px; }
+.hint-box .hint-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--info); font-weight:700; margin-bottom:3px; }
+.hint-box .hint-text{ font-size:13px; color:var(--ink); white-space:pre-wrap; }
+.hint-box.empty .hint-text{ color:var(--ink-soft); font-style:italic; }
+
+.answerkey-overlay{ position:fixed; inset:0; background:rgba(10,7,3,0.72); display:none; align-items:flex-start; justify-content:center; padding:30px 14px; overflow-y:auto; z-index:100; }
+.answerkey-overlay.open{ display:flex; }
+.answerkey-modal{ background:linear-gradient(180deg, var(--parchment), var(--parchment-dark)); border-radius:10px; padding:2px; box-shadow:var(--shadow); max-width:720px; width:100%; margin-bottom:30px; }
+.answerkey-modal-inner{ border-radius:8px; border:3px solid var(--wood-light); outline:1px solid var(--gold-dim); outline-offset:-6px; padding:22px clamp(14px,3vw,28px); }
+.answerkey-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.answerkey-head h2{ margin:0; font-family:'Noto Serif Thai',serif; font-size:18px; color:var(--ink); }
+.answerkey-close{ background:none; border:1px solid var(--ink-soft); color:var(--ink-soft); border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px; }
+.answerkey-tabs{ display:flex; gap:8px; margin-bottom:16px; }
+.answerkey-tab{ background:rgba(255,255,255,0.3); border:1px solid var(--gold-dim); color:var(--ink); padding:7px 16px; border-radius:20px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+.answerkey-tab.active{ background:var(--gold-bright); border-color:var(--wood-light); font-weight:700; }
+.answerkey-q{ padding:12px 0; border-bottom:1px solid var(--gold-dim); }
+.answerkey-q:last-of-type{ border-bottom:none; }
+.answerkey-q .aq-label{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+.answerkey-q textarea{ width:100%; min-height:60px; background:rgba(255,255,255,0.5); border:1px solid var(--gold-dim); border-radius:3px; color:var(--ink); padding:9px 11px; font-family:'Noto Serif Thai',sans-serif; font-size:13.5px; resize:vertical; }
+.answerkey-q textarea:focus{ outline:none; border-color:var(--info); box-shadow:0 0 0 3px rgba(47,81,112,0.15); }
+.answerkey-foot{ display:flex; align-items:center; gap:12px; margin-top:14px; }
+.answerkey-status{ font-size:12.5px; color:var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -154,6 +179,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           <button class="filter-btn" data-type-filter="streamer">📺 สตรีมเมอร์</button>
         </div>
         <button class="refresh-btn" id="refreshBtn">โหลดใหม่</button>
+        <button class="answerkey-btn" id="answerKeyBtn">📖 เฉลยคำตอบ</button>
         <button class="cleanup-btn" id="cleanupBtn">ลบใบสมัคร Rejected เกิน 90 วัน</button>
       </div>
       <div class="save-status" id="cleanupStatus" style="margin-bottom:14px;"></div>
@@ -163,6 +189,30 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       <div class="app-list" id="appList"></div>
     </div>
   </main>
+
+  <div class="answerkey-overlay" id="answerKeyOverlay">
+    <div class="answerkey-modal">
+      <div class="answerkey-modal-inner">
+        <div class="answerkey-head">
+          <h2>เฉลยคำตอบ (สำหรับทีมงานใช้เทียบตอนตรวจ)</h2>
+          <button class="answerkey-close" id="answerKeyCloseBtn">ปิด ✕</button>
+        </div>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin-top:-6px;">
+          กรอก/แก้ไขเฉลยของแต่ละข้อไว้ที่นี่ครั้งเดียว แล้วระบบจะแสดงเฉลยแทรกใต้คำตอบของผู้สมัครทุกใบโดยอัตโนมัติ
+          (บันทึกแยกกันสำหรับใบสมัครทั่วไปและใบสมัครสตรีมเมอร์ เพราะชุดคำถามไม่เหมือนกัน)
+        </p>
+        <div class="answerkey-tabs" id="answerKeyTabs">
+          <button class="answerkey-tab active" data-aktype="regular">สมัครทั่วไป</button>
+          <button class="answerkey-tab" data-aktype="streamer">📺 สตรีมเมอร์</button>
+        </div>
+        <div id="answerKeyFields"></div>
+        <div class="answerkey-foot">
+          <button class="save-btn" id="answerKeySaveBtn">บันทึกเฉลย</button>
+          <span class="answerkey-status" id="answerKeyStatus"></span>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script src="firebase-config.js"></script>
 <script src="firebase-storage.js"></script>
@@ -249,7 +299,6 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     q4: 'ชื่อ-นามสกุล (IC) และอายุ (IC)',
     q4Name: 'ชื่อ-นามสกุล (IC)',
     q4Age: 'อายุ (IC)',
-    q2: 'Social Media',
     q5: 'บทบาทตัวละครกับเนื้อเรื่อง / ลักษณะตัวละคร',
     q6: 'ประสบการณ์การเล่น Roleplay ที่ผ่านมา',
     q7: 'การละเมิดกฎ Common Courtesy',
@@ -269,7 +318,6 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     q4: 'ชื่อ-นามสกุล (IC) และอายุ (IC)',
     q4Name: 'ชื่อ-นามสกุล (IC)',
     q4Age: 'อายุ (IC)',
-    q2: 'Social Media',
     q5: 'บทบาทตัวละครกับเนื้อเรื่อง / ลักษณะตัวละคร',
     q6: 'ประสบการณ์การเล่น Roleplay / ผลงานที่ผ่านมา',
     q7: 'RDM คืออะไร',
@@ -277,6 +325,33 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     q9: 'จำนวนผู้เข้าร่วมปะทะฉับพลันที่อนุญาต',
     q10: 'โหน้อง ขับรถชนพี่ ไม่ลงมาขอโทษ ไม่ลงมาดูเลย แล้วขับหนีมาตั้งไกล โอ้โหอะไรวะคนไทย?'
   };
+
+  // เฉลยคำตอบเริ่มต้น — ใส่ไว้เฉพาะนิยามมาตรฐานที่ใช้กันทั่วไปในวงการ Roleplay
+  // (RDM / Metagaming / breaking character vs OOC) ส่วนข้อที่เป็นกฎเฉพาะของ
+  // เซิร์ฟเวอร์นี้เอง (จำนวนคนปะทะ, Immersive Movement, Character Customization,
+  // สถานการณ์สมมติต่างๆ) เว้นว่างไว้ให้ทีมงานกรอกเองผ่านปุ่ม "เฉลยคำตอบ"
+  // เพราะเป็นกฎที่ทีมงานตั้งเอง ระบบเดาไม่ได้ ค่าที่กรอกจะถูกบันทึกและใช้ร่วมกันทุกคน
+  const DEFAULT_ANSWER_HINTS = {
+    regular: {
+      q9: 'RDM (Random Death Match) คือการโจมตี/สังหารผู้เล่นอื่นโดยไม่มีเหตุผลหรือการปูเรื่อง IC ที่สมเหตุสมผลมาก่อน',
+      q10: 'Breaking character คือการหลุดออกจากบทบาทตัวละครกลางเกมโดยไม่ใช้ช่องทาง OOC ที่กำหนด ส่วน /ooc คือคำสั่งที่ใช้สื่อสารนอกบทบาทอย่างถูกต้อง ควรใช้เท่าที่จำเป็นและไม่กระทบอรรถรสของคนรอบข้าง',
+      q11: 'Metagaming คือการนำข้อมูลที่ตัวละครไม่ควรรู้ (มาจากนอกเกม เช่น Discord, สตรีม, หรือมุมมองผู้เล่นอื่น) มาใช้ตัดสินใจหรือกระทำการในบทบาท IC'
+    },
+    streamer: {
+      q7: 'RDM (Random Death Match) คือการโจมตี/สังหารผู้เล่นอื่นโดยไม่มีเหตุผลหรือการปูเรื่อง IC ที่สมเหตุสมผลมาก่อน',
+      q8: 'Breaking character คือการหลุดออกจากบทบาทตัวละครกลางเกมโดยไม่ใช้ช่องทาง OOC ที่กำหนด ส่วน /ooc คือคำสั่งที่ใช้สื่อสารนอกบทบาทอย่างถูกต้อง ควรใช้เท่าที่จำเป็นและไม่กระทบอรรถรสของคนรอบข้าง'
+    }
+  };
+  let answerKeys = { regular: {}, streamer: {} };
+
+  async function loadAnswerKeys(){
+    for(const type of ['regular','streamer']){
+      try{
+        const r = await window.storage.get('answerkey:' + type, true);
+        answerKeys[type] = r ? JSON.parse(r.value) : {};
+      }catch(e){ answerKeys[type] = {}; }
+    }
+  }
 
   const authWrap = document.getElementById('authWrap');
   const panelWrap = document.getElementById('panelWrap');
@@ -344,11 +419,16 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 
       // แยกคำตอบตามประเภทใบสมัคร: Whitelist และ Streamer จะใช้ชุดคำถามของตัวเอง
       const labels = isStreamer ? streamerQuestionLabels : questionLabels;
+      const akType = isStreamer ? 'streamer' : 'regular';
       const answersHtml =
         Object.keys(labels).map(id=>{
           if(record.answers && record.answers[id] !== undefined){
+            const hint = (answerKeys[akType] && answerKeys[akType][id]) || DEFAULT_ANSWER_HINTS[akType][id] || '';
+            const hintHtml = hint
+              ? '<div class="hint-box"><div class="hint-label">เฉลย</div><div class="hint-text">' + escapeHtml(hint) + '</div></div>'
+              : '<div class="hint-box empty"><div class="hint-label">เฉลย</div><div class="hint-text">ยังไม่ได้กรอกเฉลยข้อนี้ — กดปุ่ม "เฉลยคำตอบ" ด้านบนเพื่อกรอก</div></div>';
             return '<div class="field"><div class="label">' + escapeHtml(labels[id]) + '</div>' +
-                   '<div class="value">' + escapeHtml(record.answers[id] || '-') + '</div></div>';
+                   '<div class="value">' + escapeHtml(record.answers[id] || '-') + '</div>' + hintHtml + '</div>';
           }
           return '';
         }).join('') +
@@ -382,7 +462,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         '</div>' +
         '<div class="app-card-body">' +
           '<div class="field"><div class="label">Discord ID</div><div class="value">' + escapeHtml(record.discordId) + '</div></div>' +
-          '<div class="field"><div class="label">ลิงก์ช่องทางการสตรีม</div><div class="value">' + escapeHtml(record.streamLink) + '</div></div>' +
+          '<div class="field"><div class="label">Social Media</div><div class="value">' + escapeHtml(record.socialMedia || '-') + '</div></div>' +
+          (isStreamer ? '<div class="field"><div class="label">ลิงก์ช่องทางการสตรีม</div><div class="value">' + escapeHtml(record.streamLink) + '</div></div>' : '') +
           previousCommentHtml +
           answersHtml +
           '<div class="review-row">' +
@@ -495,6 +576,63 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 
   document.getElementById('refreshBtn').addEventListener('click', loadApplications);
 
+  // ============ เฉลยคำตอบ (answer key) modal ============
+  const akOverlay = document.getElementById('answerKeyOverlay');
+  const akFields = document.getElementById('answerKeyFields');
+  const akStatus = document.getElementById('answerKeyStatus');
+  let akCurrentType = 'regular';
+
+  function renderAnswerKeyFields(){
+    const labels = akCurrentType === 'streamer' ? streamerQuestionLabels : questionLabels;
+    const saved = answerKeys[akCurrentType] || {};
+    const defaults = DEFAULT_ANSWER_HINTS[akCurrentType] || {};
+    akFields.innerHTML = Object.keys(labels).map(id=>{
+      const val = saved[id] !== undefined ? saved[id] : (defaults[id] || '');
+      return '<div class="answerkey-q">' +
+        '<div class="aq-label">' + escapeHtml(labels[id]) + '</div>' +
+        '<textarea data-qid="' + id + '" placeholder="พิมพ์เฉลย/แนวคำตอบที่ถูกต้องของข้อนี้...">' + escapeHtml(val) + '</textarea>' +
+        '</div>';
+    }).join('');
+  }
+
+  document.getElementById('answerKeyBtn').addEventListener('click', ()=>{
+    akOverlay.classList.add('open');
+    akStatus.textContent = '';
+    renderAnswerKeyFields();
+  });
+  document.getElementById('answerKeyCloseBtn').addEventListener('click', ()=>{
+    akOverlay.classList.remove('open');
+  });
+  akOverlay.addEventListener('click', (e)=>{
+    if(e.target === akOverlay) akOverlay.classList.remove('open');
+  });
+  document.getElementById('answerKeyTabs').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.answerkey-tab');
+    if(!btn) return;
+    document.querySelectorAll('#answerKeyTabs .answerkey-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    akCurrentType = btn.dataset.aktype;
+    akStatus.textContent = '';
+    renderAnswerKeyFields();
+  });
+  document.getElementById('answerKeySaveBtn').addEventListener('click', async ()=>{
+    const values = {};
+    akFields.querySelectorAll('textarea[data-qid]').forEach(ta=>{
+      const v = ta.value.trim();
+      if(v) values[ta.dataset.qid] = v;
+    });
+    akStatus.textContent = 'กำลังบันทึก...';
+    try{
+      const ok = await window.storage.set('answerkey:' + akCurrentType, JSON.stringify(values), true);
+      if(!ok) throw new Error('save failed');
+      answerKeys[akCurrentType] = values;
+      akStatus.textContent = 'บันทึกเฉลยแล้ว ✓';
+      renderList(); // อัปเดตเฉลยที่แทรกอยู่ใต้คำตอบผู้สมัครทุกใบให้ตรงกับของใหม่
+    }catch(e){
+      akStatus.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+    }
+  });
+
   document.getElementById('cleanupBtn').addEventListener('click', async ()=>{
     const cleanupStatus = document.getElementById('cleanupStatus');
     const cutoff = new Date();
@@ -548,6 +686,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     authWrap.style.display = 'none';
     panelWrap.style.display = 'block';
     document.getElementById('whoAmI').textContent = 'เข้าสู่ระบบในชื่อ: ' + staffUser.username;
+    await loadAnswerKeys();
     loadApplications();
     // หมายเหตุ: เอาการโหลดใหม่อัตโนมัติออกแล้วตามที่ขอ — หน้าเว็บจะไม่รีเฟรชข้อมูลเอง
     // ผู้ใช้ต้องกดปุ่ม "โหลดใหม่" เองเมื่อต้องการข้อมูลล่าสุด

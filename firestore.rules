@@ -47,17 +47,41 @@ service cloud.firestore {
         // กันเอกสารบวมผิดปกติ / spam field แปลกปลอม
         && request.resource.data.size() < 20;
 
-      // ---- แก้ไขใบสมัคร (ทีมงานให้ผลตรวจสอบ) ----
-      // แก้ได้เฉพาะฟิลด์ผลตรวจสอบเท่านั้น ห้ามแตะ steamId/streamLink/answers/
-      // submittedAt/discordId ของใบสมัครเดิมเด็ดขาด — ปิดช่องแก้ไขข้อมูล
-      // ผู้สมัครคนอื่นแม้จะไม่มีสิทธิ์แอดมินจริง
-      allow update: if
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment'])
-        && request.resource.data.status in
-          ['pending', 'approved', 'rejected', 'needs_revision']
-        && request.resource.data.adminComment is string
-        && request.resource.data.reviewedBy is string;
+      // ---- แก้ไขใบสมัคร ----
+      // มี 2 กรณีที่อนุญาตให้ "update" เอกสารเดิมได้:
+      //   (ก) ทีมงานให้ผลตรวจสอบ — แก้ได้เฉพาะฟิลด์ผลตรวจสอบเท่านั้น
+      //   (ข) ผู้สมัครส่งใบที่แก้ไขแล้วซ้ำ (resubmit) หลังถูกตีกลับ —
+      //       ต้องเขียนทับทั้งใบใหม่ (answers/steamId/socialMedia/submittedAt ฯลฯ
+      //       เปลี่ยนหมด) ซึ่งไม่ตรงกับ schema แคบของ (ก) จึงต้องมีเงื่อนไขแยก
+      //       ให้เหมือนกับตอน create แทบทั้งหมด แต่เป็น update เพราะเอกสารมีอยู่แล้ว
+      //       (บั๊กเดิม: ไม่มีเงื่อนไขนี้ ทำให้การส่งใบแก้ไขใหม่ถูก Firestore
+      //       ปฏิเสธเงียบๆ หน้า admin จึงไม่เห็นการเปลี่ยนแปลงใดๆ)
+      allow update: if isAdminReview() || isApplicantResubmission();
+
+      function isAdminReview() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment'])
+          && request.resource.data.status in
+            ['pending', 'approved', 'approved_waiting', 'rejected', 'needs_revision']
+          && request.resource.data.adminComment is string
+          && request.resource.data.reviewedBy is string;
+      }
+
+      function isApplicantResubmission() {
+        // แก้ไขใหม่ได้เฉพาะตอนที่ใบเดิมยังไม่ถูกอนุมัติเท่านั้น (ผ่านแล้ว/รอเซิฟเปิด ห้ามส่งทับ)
+        return resource.data.status in ['pending', 'rejected', 'needs_revision']
+          && discordId == request.resource.data.discordId
+          && request.resource.data.discordId is string
+          && request.resource.data.discordId.size() > 0
+          && request.resource.data.steamId is string
+          && (!('streamLink' in request.resource.data) || request.resource.data.streamLink is string)
+          && request.resource.data.submittedAt is string
+          && request.resource.data.status == 'pending'
+          && !('adminComment' in request.resource.data)
+          && !('reviewedAt' in request.resource.data)
+          && !('reviewedBy' in request.resource.data)
+          && request.resource.data.size() < 20;
+      }
 
       // ---- ลบใบสมัคร ----
       // ลบได้เฉพาะใบที่ถูกตัดสินว่า "ไม่ผ่านการพิจารณา" แล้วเท่านั้น —
