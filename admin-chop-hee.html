@@ -461,7 +461,9 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         ? '<span class="status-pill" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นเดิม">📝 มีความเห็นเดิม</span>'
         : '';
       const previousCommentHtml = record.previousComment
-        ? '<div class="field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
+        ? '<div class="field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
+          (record.previousReviewedBy ? ' — ตรวจโดย ' + escapeHtml(record.previousReviewedBy) : '') +
+          '</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
         : '';
       const reviewerInfoHtml = record.reviewedBy
         ? '<div class="field reviewer-field"><div class="label">ตรวจสอบล่าสุดโดย</div><div class="value">' +
@@ -530,7 +532,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           reviewedAt: new Date().toISOString(),
           reviewedBy: staffUser.username,
           resubmittedAt: null, // ตรวจแล้ว เลยเอาป้าย "แก้ไขและส่งใหม่" ออก
-          previousComment: null
+          previousComment: null,
+          previousReviewedBy: null
         });
         try{
           const ok = await window.storage.set(key, JSON.stringify(updated), true);
@@ -542,6 +545,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           record.reviewedBy = updated.reviewedBy;
           record.resubmittedAt = null;
           record.previousComment = null;
+          record.previousReviewedBy = null;
 
           // อัปเดตป้าย "ตรวจโดย" ที่หัวการ์ด + แถวข้อมูลผู้ตรวจในการ์ด ให้ตรงกับค่าล่าสุดทันที
           // (แก้บั๊กเดิม: ก่อนหน้านี้ record.reviewedBy ไม่เคยถูกอัปเดตในหน่วยความจำ

@@ -60,7 +60,7 @@ service cloud.firestore {
 
       function isAdminReview() {
         return request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment'])
+            .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment', 'previousReviewedBy'])
           && request.resource.data.status in
             ['pending', 'approved', 'approved_waiting', 'rejected', 'needs_revision']
           && request.resource.data.adminComment is string

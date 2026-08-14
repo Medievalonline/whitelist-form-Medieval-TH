@@ -946,6 +946,7 @@ const Storage = {
     if(latestPrevRecord){
       record.resubmittedAt = record.submittedAt;
       if(latestPrevRecord.adminComment) record.previousComment = latestPrevRecord.adminComment;
+      if(latestPrevRecord.reviewedBy) record.previousReviewedBy = latestPrevRecord.reviewedBy;
     }
 
     submitBtn.disabled = true;
