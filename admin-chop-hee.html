@@ -77,6 +77,9 @@ main{ max-width:1000px; margin:36px auto; padding:0 20px; }
 .app-card-head .name{ font-weight:600; font-size:14.5px; color:var(--ink); }
 .app-card-head .meta{ font-size:12px; color:var(--ink-soft); }
 .status-pill{ padding:6px 14px; border-radius:20px; font-weight:700; font-size:12px; border:1px solid currentColor; white-space:nowrap; background:rgba(255,255,255,0.25); }
+.reviewer-meta{ color:var(--info); font-weight:600; }
+.reviewer-field{ background:rgba(47,81,112,0.08); border-left:3px solid var(--info-bright); padding:10px 14px; border-radius:3px; margin-top:2px; }
+.reviewer-field .label{ color:var(--info); }
 .app-card-body{ display:none; padding:0 20px 20px; border-top:2px solid var(--gold-dim); }
 .app-card-body.open{ display:block; }
 .field{ padding:14px 0; border-bottom:1px solid var(--gold-dim); }
@@ -457,6 +460,12 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       const previousCommentHtml = record.previousComment
         ? '<div class="field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
         : '';
+      const reviewerInfoHtml = record.reviewedBy
+        ? '<div class="field reviewer-field"><div class="label">ตรวจสอบล่าสุดโดย</div><div class="value">' +
+          escapeHtml(record.reviewedBy) +
+          (record.reviewedAt ? ' — ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') +
+          '</div></div>'
+        : '';
 
       card.innerHTML =
         '<div class="app-card-inner">' +
@@ -465,6 +474,9 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
             '<div>' +
               '<div class="name">' + escapeHtml(record.discordUsername || record.discordId) + '</div>' +
               '<div class="meta">Steam: ' + escapeHtml(record.steamId) + ' · ' + new Date(record.submittedAt).toLocaleString('th-TH') + '</div>' +
+              (record.reviewedBy
+                ? '<div class="meta reviewer-meta">ตรวจโดย: ' + escapeHtml(record.reviewedBy) + (record.reviewedAt ? ' · ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') + '</div>'
+                : '') +
             '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;">' + streamerBadge + resubmitBadge +
@@ -475,6 +487,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           '<div class="field"><div class="label">Social Media</div><div class="value">' + escapeHtml(record.socialMedia || '-') + '</div></div>' +
           (isStreamer ? '<div class="field"><div class="label">ลิงก์ช่องทางการสตรีม</div><div class="value">' + escapeHtml(record.streamLink) + '</div></div>' : '') +
           previousCommentHtml +
+          reviewerInfoHtml +
           answersHtml +
           '<div class="review-row">' +
             '<select class="status-select">' +
@@ -523,8 +536,31 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           record.status = newStatus;
           record.adminComment = newComment;
           record.reviewedAt = updated.reviewedAt;
+          record.reviewedBy = updated.reviewedBy;
           record.resubmittedAt = null;
           record.previousComment = null;
+
+          // อัปเดตป้าย "ตรวจโดย" ที่หัวการ์ด + แถวข้อมูลผู้ตรวจในการ์ด ให้ตรงกับค่าล่าสุดทันที
+          // (แก้บั๊กเดิม: ก่อนหน้านี้ record.reviewedBy ไม่เคยถูกอัปเดตในหน่วยความจำ
+          //  ต้องกด "โหลดใหม่" ก่อนถึงจะเห็นชื่อผู้ตรวจล่าสุด)
+          const reviewerText = 'ตรวจโดย: ' + record.reviewedBy + ' · ' + new Date(record.reviewedAt).toLocaleString('th-TH');
+          let reviewerBadge = card.querySelector('.reviewer-meta');
+          if(!reviewerBadge){
+            reviewerBadge = document.createElement('div');
+            reviewerBadge.className = 'meta reviewer-meta';
+            card.querySelector('.app-card-head .left > div').appendChild(reviewerBadge);
+          }
+          reviewerBadge.textContent = reviewerText;
+
+          let reviewerField = card.querySelector('.reviewer-field .value');
+          if(!reviewerField){
+            const field = document.createElement('div');
+            field.className = 'field reviewer-field';
+            field.innerHTML = '<div class="label">ตรวจสอบล่าสุดโดย</div><div class="value"></div>';
+            card.querySelector('.review-row').insertAdjacentElement('beforebegin', field);
+            reviewerField = field.querySelector('.value');
+          }
+          reviewerField.textContent = record.reviewedBy + ' — ' + new Date(record.reviewedAt).toLocaleString('th-TH');
           const pill = card.querySelector('.main-status');
           const s = STATUS_LABELS[newStatus];
           pill.textContent = s.label;
