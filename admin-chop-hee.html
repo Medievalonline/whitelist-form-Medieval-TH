@@ -485,7 +485,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       const historyList = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
       const totalPastComments = historyList.length + (record.previousComment ? 1 : 0);
       const prevCommentBadge = totalPastComments > 0
-        ? '<span class="status-pill prev-comment-badge" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
+        ? '<span class="status-pill prev-comment-badge" style="color:#fff3d0; background:#7a5a12; border-color:#7a5a12; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
         : '';
       const previousCommentHtml = record.previousComment
         ? '<div class="field previous-comment-field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
