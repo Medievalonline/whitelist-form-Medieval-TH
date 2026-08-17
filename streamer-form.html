@@ -987,9 +987,33 @@ const Storage = {
     }catch(e){ /* ถ้าดึงไม่สำเร็จ ใช้ค่าที่มีอยู่แล้วแทน ดีกว่าบล็อกการส่งใบสมัคร */ }
 
     if(latestPrevRecord && latestPrevRecord.type === 'streamer'){
-      record.resubmittedAt = record.submittedAt;
-      if(latestPrevRecord.adminComment) record.previousComment = latestPrevRecord.adminComment;
-      if(latestPrevRecord.reviewedBy) record.previousReviewedBy = latestPrevRecord.reviewedBy;
+      // ทีมงานเคยให้ผลตรวจสอบใบเดิมมาก่อนหรือยัง (มี reviewedBy แปลว่าเคยตรวจจริง)
+      // ถ้ายังไม่เคยตรวจเลย ไม่ควรติดป้าย "แก้ไขและส่งใหม่" — ให้ขึ้นสถานะ
+      // "รอตรวจสอบ" แบบปกติ เพื่อไม่ให้ทีมงานสับสนว่าคนนี้แก้ตามคอมเมนต์ไหน
+      const wasReviewed = !!latestPrevRecord.reviewedBy;
+      if(wasReviewed){
+        record.resubmittedAt = record.submittedAt;
+      }
+
+      // เก็บประวัติความเห็นของทีมงานทุกรอบที่เคยมีมาต่อกับใบใหม่ ไม่ให้หายตอนแก้ไขส่งใหม่
+      const history = Array.isArray(latestPrevRecord.reviewHistory) ? latestPrevRecord.reviewHistory.slice() : [];
+      if(wasReviewed){
+        history.push({
+          status: latestPrevRecord.status || 'pending',
+          comment: latestPrevRecord.adminComment || '',
+          reviewedBy: latestPrevRecord.reviewedBy,
+          reviewedAt: latestPrevRecord.reviewedAt || null
+        });
+      }
+      if(latestPrevRecord.previousComment){
+        history.push({
+          status: 'ก่อนแก้ไขและส่งใหม่',
+          comment: latestPrevRecord.previousComment,
+          reviewedBy: latestPrevRecord.previousReviewedBy || '-',
+          reviewedAt: null
+        });
+      }
+      if(history.length > 0) record.reviewHistory = history;
     }
 
     submitBtn.disabled = true;

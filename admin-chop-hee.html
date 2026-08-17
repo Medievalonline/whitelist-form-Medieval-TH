@@ -390,6 +390,26 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     return d.innerHTML;
   }
 
+  // ประวัติความเห็นของทีมงานทุกรอบ — แสดงไม่ว่ารอบนั้นจะให้สถานะอะไรก็ตาม
+  // (ผ่าน / ผ่านรอเซิฟเปิด / ไม่ผ่าน / ต้องแก้ไข ฯลฯ) กันความเห็นรอบก่อนๆ หายไป
+  // เวลาทีมงานตรวจซ้ำแล้วเขียนทับ adminComment เดิม
+  function buildHistoryHtml(list){
+    if(!Array.isArray(list) || list.length === 0) return '';
+    const rows = list.slice().reverse().map(h=>{
+      const st = STATUS_LABELS[h.status];
+      const statusLabel = st ? st.label : (h.status || '-');
+      const when = h.reviewedAt ? new Date(h.reviewedAt).toLocaleString('th-TH') : '';
+      return '<div class="field" style="border-bottom:1px dashed var(--gold-dim);">' +
+        '<div class="label">' + escapeHtml(statusLabel) +
+          (h.reviewedBy ? ' — ตรวจโดย ' + escapeHtml(h.reviewedBy) : '') +
+          (when ? ' · ' + when : '') +
+        '</div>' +
+        '<div class="value">' + escapeHtml(h.comment || '(ไม่มีความเห็น)') + '</div>' +
+      '</div>';
+    }).join('');
+    return '<div class="field"><div class="label">📜 ความเห็นของทีมงานก่อนหน้านี้ทั้งหมด (' + list.length + ' รายการ)</div></div>' + rows;
+  }
+
   async function loadApplications(){
     loadingMsg.style.display = 'block';
     emptyMsg.style.display = 'none';
@@ -462,14 +482,17 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       const streamerBadge = isStreamer
         ? '<span class="status-pill" style="color:#c58bff; margin-right:8px;">📺 สตรีมเมอร์</span>'
         : '';
-      const prevCommentBadge = record.previousComment
-        ? '<span class="status-pill" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นเดิม">📝 มีความเห็นเดิม</span>'
+      const historyList = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
+      const totalPastComments = historyList.length + (record.previousComment ? 1 : 0);
+      const prevCommentBadge = totalPastComments > 0
+        ? '<span class="status-pill prev-comment-badge" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
         : '';
       const previousCommentHtml = record.previousComment
-        ? '<div class="field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
+        ? '<div class="field previous-comment-field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
           (record.previousReviewedBy ? ' — ตรวจโดย ' + escapeHtml(record.previousReviewedBy) : '') +
           '</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
         : '';
+      const reviewHistoryHtml = buildHistoryHtml(historyList);
       const reviewerInfoHtml = record.reviewedBy
         ? '<div class="field reviewer-field"><div class="label">ตรวจสอบล่าสุดโดย</div><div class="value">' +
           escapeHtml(record.reviewedBy) +
@@ -499,6 +522,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           reviewerInfoHtml +
           answersHtml +
           previousCommentHtml +
+          '<div class="review-history">' + reviewHistoryHtml + '</div>' +
           '<div class="review-row">' +
             '<select class="status-select">' +
               Object.keys(STATUS_LABELS).map(k=>'<option value="'+k+'"'+(record.status===k?' selected':'')+'>'+STATUS_LABELS[k].label+'</option>').join('') +
@@ -531,6 +555,30 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         const newComment = card.querySelector('.admin-comment').value.trim();
         saveBtn.disabled = true;
         saveStatusEl.textContent = 'กำลังบันทึก...';
+        // เก็บผลตรวจสอบรอบก่อนหน้า (ถ้ามี) ไว้ใน reviewHistory ก่อนเขียนทับ
+        // ทำแบบนี้ทุกครั้งไม่ว่ารอบใหม่จะให้สถานะอะไร (รวมถึงผ่าน/ผ่านรอเซิฟเปิด)
+        // แก้บั๊กเดิม: โค้ดเขียนทับ adminComment/reviewedBy ตรงๆ ทุกครั้งที่บันทึก
+        // ความเห็นของทีมงานรอบก่อนๆ เลยหายไปจากหน้า admin — เห็นชัดสุดตอนกด
+        // "ผ่าน"/"ผ่านแล้วรอเซิฟเปิด" เพราะเป็นสถานะปิดจ๊อบ ไม่มีการ resubmit
+        // ให้กลับมาเห็นความเห็นเดิมได้อีกแล้ว
+        const history = Array.isArray(record.reviewHistory) ? record.reviewHistory.slice() : [];
+        if(record.reviewedBy){
+          history.push({
+            status: record.status || 'pending',
+            comment: record.adminComment || '',
+            reviewedBy: record.reviewedBy,
+            reviewedAt: record.reviewedAt || null
+          });
+        }
+        // ย้ายความเห็นเดิมตอนผู้สมัคร resubmit (ถ้ามี) เข้า history เดียวกัน กันตกหล่น
+        if(record.previousComment){
+          history.push({
+            status: 'ก่อนแก้ไขและส่งใหม่',
+            comment: record.previousComment,
+            reviewedBy: record.previousReviewedBy || '-',
+            reviewedAt: null
+          });
+        }
         const updated = Object.assign({}, record, {
           status: newStatus,
           adminComment: newComment,
@@ -538,7 +586,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           reviewedBy: staffUser.username,
           resubmittedAt: null, // ตรวจแล้ว เลยเอาป้าย "แก้ไขและส่งใหม่" ออก
           previousComment: null,
-          previousReviewedBy: null
+          previousReviewedBy: null,
+          reviewHistory: history
         });
         try{
           const ok = await window.storage.set(key, JSON.stringify(updated), true);
@@ -551,6 +600,19 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           record.resubmittedAt = null;
           record.previousComment = null;
           record.previousReviewedBy = null;
+          record.reviewHistory = history;
+
+          // อัปเดตกล่องประวัติความเห็นทั้งหมดในการ์ดให้ตรงกับข้อมูลล่าสุดทันที
+          const historyContainer = card.querySelector('.review-history');
+          if(historyContainer) historyContainer.innerHTML = buildHistoryHtml(history);
+          // ความเห็นเดิมจากตอน resubmit ถูกย้ายเข้า history แล้ว เอาช่อง/ป้ายเดิมออก
+          const prevField = card.querySelector('.previous-comment-field');
+          if(prevField) prevField.remove();
+          const prevBadge = card.querySelector('.prev-comment-badge');
+          if(prevBadge){
+            if(history.length > 0) prevBadge.textContent = '📝 มีความเห็นเดิม (' + history.length + ')';
+            else prevBadge.remove();
+          }
 
           // อัปเดตป้าย "ตรวจโดย" ที่หัวการ์ด + แถวข้อมูลผู้ตรวจในการ์ด ให้ตรงกับค่าล่าสุดทันที
           // (แก้บั๊กเดิม: ก่อนหน้านี้ record.reviewedBy ไม่เคยถูกอัปเดตในหน่วยความจำ

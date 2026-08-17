@@ -60,11 +60,15 @@ service cloud.firestore {
 
       function isAdminReview() {
         return request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment', 'previousReviewedBy'])
+            .hasOnly(['status', 'adminComment', 'reviewedAt', 'reviewedBy', 'resubmittedAt', 'previousComment', 'previousReviewedBy', 'reviewHistory'])
           && request.resource.data.status in
             ['pending', 'approved', 'approved_waiting', 'rejected', 'needs_revision']
           && request.resource.data.adminComment is string
-          && request.resource.data.reviewedBy is string;
+          && request.resource.data.reviewedBy is string
+          // reviewHistory เก็บ log ความเห็นของทีมงานทุกรอบ (ไม่ว่าจะให้สถานะ
+          // อะไรก็ตาม) เพื่อให้ admin.html โชว์ความเห็นก่อนหน้าได้ครบ —
+          // ฟิลด์นี้ไม่บังคับต้องมี แต่ถ้ามีต้องเป็น list เท่านั้น
+          && (!('reviewHistory' in request.resource.data) || request.resource.data.reviewHistory is list);
       }
 
       function isApplicantResubmission() {
@@ -80,6 +84,10 @@ service cloud.firestore {
           && !('adminComment' in request.resource.data)
           && !('reviewedAt' in request.resource.data)
           && !('reviewedBy' in request.resource.data)
+          // reviewHistory ที่สะสมไว้จากการตรวจของทีมงานรอบก่อนๆ ต้องรอดจากการ
+          // resubmit ได้ (หน้า resubmit ควรคัดลอกฟิลด์นี้ต่อมาจากเอกสารเดิม
+          // ไม่ใช่สร้างใหม่ ไม่งั้นความเห็นเก่าจะหายตอนผู้สมัครส่งใบแก้ไข)
+          && (!('reviewHistory' in request.resource.data) || request.resource.data.reviewHistory is list)
           && request.resource.data.size() < 20;
       }
 
