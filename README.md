@@ -504,70 +504,6 @@ status == approved
 
 ---
 
-# 📩 แจ้งเตือนผู้สมัครทาง Discord DM
-
-นอกจากการเพิ่ม Role อัตโนมัติ ระบบยังมี Script อีกตัว:
-
-```text
-scripts/notify-applicants.js
-```
-
-สำหรับ **ทัก DM ส่วนตัว** ไปหาผู้สมัครทุกครั้งที่ทีมงานตรวจใบสมัครเสร็จใน `admin.html` ไม่ว่าผลจะเป็น:
-
-```text
-ผ่าน (approved)
-ผ่านแล้วรอเซิฟเปิด (approved_waiting)
-ไม่ผ่าน (rejected)
-ต้องแก้ไข (needs_revision)
-```
-
-ข้อความ DM จะบอกสถานะล่าสุด แนบความเห็นของทีมงาน (ถ้ามี) และแนบลิงก์ให้ผู้สมัครกลับไปดูรายละเอียดที่ `status.html` อีกครั้ง
-
-Script รันพร้อมกับ `sync-discord-roles.js` บน Workflow เดียวกัน (`.github/workflows/sync-discord-roles.yml`) ทุก 5 นาที โดยใช้ Secret ชุดเดียวกัน (`DISCORD_BOT_TOKEN`, `FIREBASE_SERVICE_ACCOUNT_JSON`) ไม่ต้องสร้าง Secret เพิ่ม
-
-Script จะ:
-
-```text
-ดึงใบสมัครทั้งหมด
-        ↓
-เทียบเวลาที่ตรวจล่าสุด (reviewedAt)
-กับเวลาที่เคยแจ้งเตือนไปแล้ว (notifiedReviewedAt)
-        ↓
-ถ้าไม่ตรงกัน = มีผลตรวจใหม่ที่ยังไม่แจ้ง
-        ↓
-เปิด DM กับผู้สมัคร แล้วส่งข้อความ
-        ↓
-บันทึกผลกลับ Firestore (notifiedReviewedAt)
-```
-
-ระบบจะข้ามใบที่สถานะยังเป็น `pending` (ยังไม่ตรวจ) และข้ามใบที่เคยแจ้งเตือนผลตรวจรอบนั้นไปแล้ว เพื่อไม่ให้ทักซ้ำ
-
-## ⚙️ ตั้งค่าลิงก์หน้า Status
-
-เปิดไฟล์ `scripts/notify-applicants.js` แล้วแก้ค่า:
-
-```javascript
-const STATUS_PAGE_URL = "ใส่_STATUS_PAGE_URL_ตรงนี้";
-```
-
-ให้เป็น URL จริงของหน้า `status.html` หลัง Deploy เช่น:
-
-```text
-https://USERNAME.github.io/whitelist-form-Medieval-TH/status.html
-```
-
-## ⚠️ เงื่อนไขการส่ง DM
-
-Discord ไม่อนุญาตให้บอทส่ง DM หาผู้ใช้ที่ไม่ได้อยู่เซิร์ฟเวอร์เดียวกับบอท และผู้ใช้บางคนอาจปิดรับ DM จากสมาชิกเซิร์ฟเวอร์ไว้ ถ้าพบ:
-
-```text
-HTTP 403
-```
-
-หมายถึงส่ง DM ไม่สำเร็จด้วยเหตุผลข้างต้น ระบบจะบันทึกไว้ที่ฟิลด์ `notifyError` ในเอกสารใบสมัครนั้น ให้ทีมงานตรวจสอบและแจ้งผู้สมัครด้วยช่องทางอื่นแทน (เช่น ให้เข้าเซิร์ฟเวอร์ก่อน หรือเปิดรับ DM)
-
----
-
 # 🤖 ขั้นตอนที่ 9 — สร้าง Discord Bot
 
 สร้าง Bot ใน:
@@ -1100,9 +1036,7 @@ GitHub Actions สำหรับ Discord Role Sync ก็จะใช้ Code �
 - [ ] ตั้ง `DISCORD_BOT_TOKEN`
 - [ ] สร้าง Firebase Service Account
 - [ ] ตั้ง `FIREBASE_SERVICE_ACCOUNT_JSON`
-- [ ] แก้ `STATUS_PAGE_URL` ใน `scripts/notify-applicants.js`
 - [ ] ทดสอบ GitHub Actions
-- [ ] ทดสอบว่าผู้สมัครได้รับ DM แจ้งผลตรวจ
 
 ### Security
 
@@ -1175,7 +1109,6 @@ GitHub Actions สำหรับ Discord Role Sync ก็จะใช้ Code �
 | `firebase-storage.js` | ตัวเชื่อม Firestore |
 | `firestore.rules` | กฎความปลอดภัย Firestore |
 | `scripts/sync-discord-roles.js` | เพิ่มยศ Discord อัตโนมัติ |
-| `scripts/notify-applicants.js` | แจ้งเตือนผลตรวจใบสมัครทาง Discord DM |
 | `.github/workflows/sync-discord-roles.yml` | GitHub Actions |
 | `package.json` | Node.js / Dependencies |
 
