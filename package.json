@@ -6,7 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "sync": "node scripts/sync-discord-roles.js"
+    "sync": "node scripts/sync-discord-roles.js",
+    "notify": "node scripts/notify-applicants.js"
   },
   "dependencies": {
     "firebase-admin": "^12.6.0"
