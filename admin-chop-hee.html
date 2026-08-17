@@ -169,8 +169,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         <div class="who" id="whoAmI"></div>
         <span class="logout-link" id="logoutLink" style="color:#c7b990;font-size:12.5px;text-decoration:underline;cursor:pointer;">ออกจากระบบ</span>
         <div class="filter-row" id="filterRow">
-          <button class="filter-btn active" data-filter="all">ทั้งหมด</button>
-          <button class="filter-btn" data-filter="pending">รอตรวจสอบ</button>
+          <button class="filter-btn" data-filter="all">ทั้งหมด*</button>
+          <button class="filter-btn active" data-filter="pending">รอตรวจสอบ</button>
           <button class="filter-btn" data-filter="approved">ผ่าน</button>
           <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอเซิฟเปิด</button>
           <button class="filter-btn" data-filter="rejected">ไม่ผ่าน</button>
@@ -184,6 +184,10 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         <button class="refresh-btn" id="refreshBtn">โหลดใหม่</button>
         <button class="answerkey-btn" id="answerKeyBtn">📖 เฉลยคำตอบ</button>
         <button class="cleanup-btn" id="cleanupBtn">ลบใบสมัคร Rejected เกิน 90 วัน</button>
+      </div>
+      <div class="save-status" id="statusHint" style="margin-bottom:6px;">
+        เพื่อประหยัด Firestore reads หน้านี้จะโหลดเฉพาะใบ "รอตรวจสอบ" ให้อัตโนมัติ —
+        กดแท็บสถานะอื่นเพื่อโหลดเฉพาะสถานะนั้นตอนต้องการดู (*"ทั้งหมด" จะแสดงรวมเฉพาะสถานะที่เคยกดเปิดดูแล้วในเซสชันนี้ ไม่ได้โหลดข้อมูลใหม่)
       </div>
       <div class="save-status" id="cleanupStatus" style="margin-bottom:14px;"></div>
 
@@ -380,9 +384,11 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 
   let staffUser = null;
   let allRecords = [];
-  let currentFilter = 'all';
+  let currentFilter = 'pending'; // ค่าเริ่มต้น: โชว์แค่ "รอตรวจสอบ" เพื่อลด Firestore reads
   let currentTypeFilter = 'all';
   let openKeys = new Set(); // เก็บ key ของใบสมัครที่เปิดดูอยู่ ไม่ให้ auto-refresh ไปหุบทิ้ง
+  let loadedStatuses = new Set(); // สถานะที่เคย fetch มาแล้วในเซสชันนี้ (กันโหลดซ้ำ)
+  let statusInFlight = null; // กันกดรัวๆ แล้ว fetch สถานะเดียวกันซ้อนกันหลายรอบ
 
   function escapeHtml(str){
     const d = document.createElement('div');
@@ -410,27 +416,51 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     return '<div class="field"><div class="label">📜 ความเห็นของทีมงานก่อนหน้านี้ทั้งหมด (' + list.length + ' รายการ)</div></div>' + rows;
   }
 
-  async function loadApplications(){
-    loadingMsg.style.display = 'block';
-    emptyMsg.style.display = 'none';
-    appList.innerHTML = '';
+  // ดึงเฉพาะใบสมัครของ "สถานะเดียว" ผ่าน listByStatus() — Firestore query ที่กรอง
+  // status ให้ตั้งแต่ฝั่งเซิร์ฟเวอร์ อ่านเฉพาะเอกสารที่ status ตรงเงื่อนไขเท่านั้น
+  // แล้ว merge เข้า allRecords (แทนที่ของเดิมด้วยสถานะเดียวกัน กันข้อมูลซ้ำ/ค้าง)
+  async function fetchStatus(status, {silent=false}={}){
+    if(statusInFlight === status) return; // กันกดซ้อน
+    statusInFlight = status;
+    if(!silent){ loadingMsg.style.display = 'block'; }
     try{
-      const listRes = await window.storage.list('application:', true);
-      const keys = (listRes && listRes.keys) || [];
-      const records = [];
-      for(const key of keys){
-        try{
-          const r = await window.storage.get(key, true);
-          if(r) records.push({ key, record: JSON.parse(r.value) });
-        }catch(e){ /* skip unreadable entry */ }
-      }
-      records.sort((a,b)=> new Date(b.record.submittedAt) - new Date(a.record.submittedAt));
-      allRecords = records;
+      const res = await window.storage.listByStatus(status);
+      const fresh = (res && res.records || []).map(r => ({ key: r.key, record: JSON.parse(r.value) }));
+      const freshKeys = new Set(fresh.map(x=>x.key));
+      // เอา record เก่าของ "สถานะนี้" ที่ตอนนี้ไม่ตรงแล้วออก (เช่นเคยเป็น pending
+      // แต่ตอนนี้ถูกเปลี่ยนสถานะไปแล้วจากที่อื่น) ส่วน record ของสถานะอื่นที่โหลด
+      // ไว้อยู่แล้วไม่แตะต้อง
+      allRecords = allRecords.filter(x => !(x.record.status === status && !freshKeys.has(x.key)));
+      const existingKeys = new Set(allRecords.map(x=>x.key));
+      fresh.forEach(item=>{
+        if(existingKeys.has(item.key)){
+          allRecords = allRecords.map(x => x.key === item.key ? item : x);
+        }else{
+          allRecords.push(item);
+        }
+      });
+      allRecords.sort((a,b)=> new Date(b.record.submittedAt) - new Date(a.record.submittedAt));
+      loadedStatuses.add(status);
       renderList();
     }catch(e){
       appList.innerHTML = '<div class="empty-msg">โหลดข้อมูลไม่สำเร็จ กรุณากด "โหลดใหม่"</div>';
     }
-    loadingMsg.style.display = 'none';
+    if(!silent){ loadingMsg.style.display = 'none'; }
+    statusInFlight = null;
+  }
+
+  // ปุ่ม "โหลดใหม่": รีเฟรชเฉพาะสถานะที่กำลังดูอยู่ (หรือทุกสถานะที่เคยเปิดไว้แล้ว
+  // ถ้าอยู่ในแท็บ "ทั้งหมด") — ไม่ดึงทั้ง collection เหมือนของเดิม
+  async function loadApplications(){
+    if(currentFilter === 'all'){
+      const statuses = loadedStatuses.size ? Array.from(loadedStatuses) : ['pending'];
+      loadingMsg.style.display = 'block';
+      for(const s of statuses){ await fetchStatus(s, {silent:true}); }
+      loadingMsg.style.display = 'none';
+      renderList();
+    }else{
+      await fetchStatus(currentFilter);
+    }
   }
 
   function renderList(){
@@ -485,7 +515,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       const historyList = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
       const totalPastComments = historyList.length + (record.previousComment ? 1 : 0);
       const prevCommentBadge = totalPastComments > 0
-        ? '<span class="status-pill prev-comment-badge" style="color:#fff3d0; background:#7a5a12; border-color:#7a5a12; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
+        ? '<span class="status-pill prev-comment-badge" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
         : '';
       const previousCommentHtml = record.previousComment
         ? '<div class="field previous-comment-field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
@@ -676,13 +706,20 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     });
   }
 
-  document.getElementById('filterRow').addEventListener('click', (e)=>{
+  document.getElementById('filterRow').addEventListener('click', async (e)=>{
     const btn = e.target.closest('.filter-btn');
     if(!btn) return;
     document.querySelectorAll('#filterRow .filter-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     currentFilter = btn.dataset.filter;
-    renderList();
+    if(currentFilter === 'all'){
+      // "ทั้งหมด" ไม่ดึงข้อมูลใหม่ — โชว์แค่สถานะที่เคยกดเปิดดูแล้วในเซสชันนี้
+      renderList();
+    }else if(!loadedStatuses.has(currentFilter)){
+      await fetchStatus(currentFilter);
+    }else{
+      renderList();
+    }
   });
 
   document.getElementById('typeFilterRow').addEventListener('click', (e)=>{
@@ -758,6 +795,13 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 90);
 
+    // ดึงเฉพาะใบ "ไม่ผ่านการพิจารณา" สดๆ ก่อนเช็ค — ไม่พึ่งพา allRecords ที่อาจ
+    // ยังไม่เคยโหลดสถานะนี้เข้ามาเลย (เช่นแอดมินยังไม่เคยกดแท็บ "ไม่ผ่าน")
+    cleanupStatus.textContent = 'กำลังตรวจสอบใบสมัคร Rejected...';
+    document.getElementById('cleanupBtn').disabled = true;
+    await fetchStatus('rejected', {silent:true});
+    document.getElementById('cleanupBtn').disabled = false;
+
     const targets = allRecords.filter(({record})=>{
       if(record.status !== 'rejected') return false;
       const refDate = record.reviewedAt || record.submittedAt;
@@ -786,7 +830,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     }
     cleanupStatus.textContent = 'ลบสำเร็จ ' + done + ' ใบ' + (failed ? (', ล้มเหลว ' + failed + ' ใบ') : '');
     document.getElementById('cleanupBtn').disabled = false;
-    loadApplications();
+    await fetchStatus('rejected', {silent:true});
   });
 
   async function loginWithToken(token){
@@ -807,7 +851,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     panelWrap.style.display = 'block';
     document.getElementById('whoAmI').textContent = 'เข้าสู่ระบบในชื่อ: ' + staffUser.username;
     await loadAnswerKeys();
-    loadApplications();
+    fetchStatus('pending'); // โหลดเริ่มต้นเฉพาะ "รอตรวจสอบ" เท่านั้น เพื่อลด reads
     // หมายเหตุ: เอาการโหลดใหม่อัตโนมัติออกแล้วตามที่ขอ — หน้าเว็บจะไม่รีเฟรชข้อมูลเอง
     // ผู้ใช้ต้องกดปุ่ม "โหลดใหม่" เองเมื่อต้องการข้อมูลล่าสุด
   }
@@ -818,6 +862,10 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     authWrap.style.display = 'block';
     panelWrap.style.display = 'none';
     deniedMsg.classList.remove('show');
+    allRecords = [];
+    loadedStatuses = new Set();
+    currentFilter = 'pending';
+    document.querySelectorAll('#filterRow .filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.filter === 'pending'));
   });
 
   async function init(){

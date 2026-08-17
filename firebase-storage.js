@@ -76,5 +76,30 @@ window.storage = (function () {
     return { keys, prefix, shared: true };
   }
 
-  return { get, set, delete: del, list };
+  // ====================================================================
+  // listByStatus(status) — เพิ่มเข้ามาเพื่อลดจำนวน Firestore reads
+  // ต่างจาก list() ตรงที่:
+  //   1. กรองด้วย Firestore query (where status == ...) ฝั่งเซิร์ฟเวอร์เลย
+  //      อ่านเฉพาะเอกสารที่ status ตรงเงื่อนไขเท่านั้น ไม่อ่านทั้ง collection
+  //   2. คืนข้อมูลเต็ม (ไม่ใช่แค่ key) มาในคำสั่งเดียว — เพราะฉะนั้นฝั่งหน้าเว็บ
+  //      ไม่ต้องวน get() ทีละใบซ้ำอีกรอบ (ของเดิม list()+get() ทีละใบ = อ่าน 2 เท่า)
+  // เอกสาร answerkey:regular / answerkey:streamer ที่แอบเก็บอยู่ใน collection
+  // เดียวกัน (เพราะ docIdFromKey ไม่ตัด prefix "answerkey:" ออก) จะไม่มีฟิลด์
+  // status จึงไม่ถูกดึงมาปนโดยอัตโนมัติอยู่แล้ว
+  // ====================================================================
+  async function listByStatus(status) {
+    const { db, fs } = await init();
+    const q = fs.query(
+      fs.collection(db, COLLECTION),
+      fs.where("status", "==", status)
+    );
+    const snap = await fs.getDocs(q);
+    const records = [];
+    snap.forEach((d) => {
+      records.push({ key: "application:" + d.id, value: JSON.stringify(d.data()) });
+    });
+    return { records, status, shared: true };
+  }
+
+  return { get, set, delete: del, list, listByStatus };
 })();
