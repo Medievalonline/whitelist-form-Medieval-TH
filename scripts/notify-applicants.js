@@ -30,9 +30,9 @@ const { getFirestore } = require("firebase-admin/firestore");
 // (แยกลิงก์ตามประเภทใบสมัคร record.type: 'streamer' หรือปกติ)
 // ---------------------------------------------------------------------
 const REGULAR_FORM_URL =
-  "https://medievalonline.github.io/whitelist-form-Medieval-TH/whitelist-form.html";
+  "https://bikiniz-fivem.github.io/whitelist-form-Medieval-TH/whitelist-form.html";
 const STREAMER_FORM_URL =
-  "https://medievalonline.github.io/whitelist-form-Medieval-TH/streamer-form.html";
+  "https://bikiniz-fivem.github.io/whitelist-form-Medieval-TH/streamer-form.html";
 
 function formUrlForRecord(record) {
   return record.type === "streamer" ? STREAMER_FORM_URL : REGULAR_FORM_URL;
