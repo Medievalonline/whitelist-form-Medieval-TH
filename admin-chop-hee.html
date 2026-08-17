@@ -61,8 +61,17 @@ main{ max-width:1000px; margin:36px auto; padding:0 20px; }
 .filter-btn{
   background:rgba(233,217,179,0.08); border:1px solid var(--gold-dim); color:#c7b990;
   padding:7px 14px; border-radius:20px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif;
+  position:relative;
 }
 .filter-btn.active{ border-color:var(--gold-bright); color:var(--gold-bright); background:rgba(233,217,179,0.16); }
+.count-badge{
+  position:absolute; top:-9px; right:-9px; min-width:19px; height:19px; padding:0 5px;
+  background:var(--red-bright); color:#fff; border:1px solid var(--wood-dark);
+  border-radius:999px; font-size:10.5px; font-weight:700; line-height:1;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.5);
+  font-family:'Cinzel', sans-serif;
+}
+.count-badge.zero{ background:#5a4a3a; opacity:.55; }
 .refresh-btn{ background:rgba(233,217,179,0.08); border:1px solid var(--gold-dim); color:var(--parchment); padding:7px 14px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
 
 .app-list{ display:flex; flex-direction:column; gap:14px; }
@@ -80,6 +89,10 @@ main{ max-width:1000px; margin:36px auto; padding:0 20px; }
 .reviewer-meta{ color:var(--info); font-weight:600; }
 .reviewer-field{ background:rgba(47,81,112,0.08); border-left:3px solid var(--info-bright); padding:10px 14px; border-radius:3px; margin-top:2px; }
 .reviewer-field .label{ color:var(--info); }
+.badge-pill{ padding:5px 12px; border-radius:20px; font-weight:700; font-size:11.5px; white-space:nowrap; border:1px solid rgba(0,0,0,.3); box-shadow:0 1px 2px rgba(0,0,0,.25); }
+.badge-streamer{ background:#3d2a63; color:#f0e2ff; }
+.badge-resubmit{ background:#1f4f78; color:#eaf6ff; }
+.badge-prevcomment{ background:#8a6412; color:#fff6dc; }
 .app-card-body{ display:none; padding:0 20px 20px; border-top:2px solid var(--gold-dim); }
 .app-card-body.open{ display:block; }
 .field{ padding:14px 0; border-bottom:1px solid var(--gold-dim); }
@@ -169,12 +182,12 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         <div class="who" id="whoAmI"></div>
         <span class="logout-link" id="logoutLink" style="color:#c7b990;font-size:12.5px;text-decoration:underline;cursor:pointer;">ออกจากระบบ</span>
         <div class="filter-row" id="filterRow">
-          <button class="filter-btn" data-filter="all">ทั้งหมด*</button>
-          <button class="filter-btn active" data-filter="pending">รอตรวจสอบ</button>
-          <button class="filter-btn" data-filter="approved">ผ่าน</button>
-          <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอเซิฟเปิด</button>
-          <button class="filter-btn" data-filter="rejected">ไม่ผ่าน</button>
-          <button class="filter-btn" data-filter="needs_revision">ต้องแก้ไข</button>
+          <button class="filter-btn" data-filter="all">ทั้งหมด*<span class="count-badge zero" id="count-all">0</span></button>
+          <button class="filter-btn active" data-filter="pending">รอตรวจสอบ<span class="count-badge zero" id="count-pending">0</span></button>
+          <button class="filter-btn" data-filter="approved">ผ่าน<span class="count-badge zero" id="count-approved">0</span></button>
+          <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอเซิฟเปิด<span class="count-badge zero" id="count-approved_waiting">0</span></button>
+          <button class="filter-btn" data-filter="rejected">ไม่ผ่าน<span class="count-badge zero" id="count-rejected">0</span></button>
+          <button class="filter-btn" data-filter="needs_revision">ต้องแก้ไข<span class="count-badge zero" id="count-needs_revision">0</span></button>
         </div>
         <div class="filter-row" id="typeFilterRow">
           <button class="filter-btn active" data-type-filter="all">ทุกประเภท</button>
@@ -304,7 +317,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
   approved: { label: 'ผ่านการพิจารณา', color: '#e5ffea', bg: '#1f6b3a' },
   approved_waiting: { label: 'ผ่านแล้วรอเซิฟเปิด', color: '#123d1a', bg: '#b7f2b0' },
   rejected: { label: 'ไม่ผ่านการพิจารณา', color: '#ffe8e8', bg: '#8b2020' },
-  needs_revision: { label: 'ต้องแก้ไขก่อน', color: '#e4f3ff', bg: '#1f4f78' }
+  needs_revision: { label: 'ต้องแก้ไขก่อน', color: '#ffffff', bg: '#0f3a5c' }
   };
 
   const questionLabels = {
@@ -389,6 +402,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
   let openKeys = new Set(); // เก็บ key ของใบสมัครที่เปิดดูอยู่ ไม่ให้ auto-refresh ไปหุบทิ้ง
   let loadedStatuses = new Set(); // สถานะที่เคย fetch มาแล้วในเซสชันนี้ (กันโหลดซ้ำ)
   let statusInFlight = null; // กันกดรัวๆ แล้ว fetch สถานะเดียวกันซ้อนกันหลายรอบ
+  let statusCounts = { pending:0, approved:0, approved_waiting:0, rejected:0, needs_revision:0 };
 
   function escapeHtml(str){
     const d = document.createElement('div');
@@ -451,6 +465,33 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 
   // ปุ่ม "โหลดใหม่": รีเฟรชเฉพาะสถานะที่กำลังดูอยู่ (หรือทุกสถานะที่เคยเปิดไว้แล้ว
   // ถ้าอยู่ในแท็บ "ทั้งหมด") — ไม่ดึงทั้ง collection เหมือนของเดิม
+
+  // อัปเดตตัวเลขบนแท็บให้ตรงกับ statusCounts ปัจจุบัน (ไม่ยิง network เอง)
+  function renderCounts(){
+    Object.keys(STATUS_LABELS).forEach(s=>{
+      const el = document.getElementById('count-' + s);
+      if(!el) return;
+      const n = statusCounts[s] || 0;
+      el.textContent = n;
+      el.classList.toggle('zero', n === 0);
+    });
+    const total = Object.values(statusCounts).reduce((a,b)=>a+(b||0), 0);
+    const allEl = document.getElementById('count-all');
+    if(allEl){ allEl.textContent = total; allEl.classList.toggle('zero', total === 0); }
+  }
+
+  // ดึงจำนวนของทุกสถานะด้วย aggregation query (countByStatus) — คนละกลไกกับ
+  // การโหลดตัวเอกสาร ต้นทุนถูกกว่ามาก (~1 read ต่อสถานะ ไม่ว่าจะมีกี่ใบ)
+  // เลยยิงพร้อมกันได้ทั้ง 5 สถานะโดยไม่กระทบเป้าหมายลด reads
+  async function refreshCounts(){
+    try{
+      const statuses = Object.keys(STATUS_LABELS);
+      const vals = await Promise.all(statuses.map(s => window.storage.countByStatus(s).catch(()=>null)));
+      statuses.forEach((s,i)=>{ if(vals[i] != null) statusCounts[s] = vals[i]; });
+      renderCounts();
+    }catch(e){ /* ตัวเลขไม่อัปเดตก็ไม่เป็นไร ไม่กระทบการทำงานหลัก */ }
+  }
+
   async function loadApplications(){
     if(currentFilter === 'all'){
       const statuses = loadedStatuses.size ? Array.from(loadedStatuses) : ['pending'];
@@ -507,15 +548,15 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       // แจ้งเตือนแบบเห็นชัดๆ ว่าใบนี้เป็นการ "แก้ไขแล้วส่งใหม่" จากผู้สมัคร
       const isResubmission = !!record.resubmittedAt;
       const resubmitBadge = isResubmission
-        ? '<span class="status-pill" style="color:var(--info); margin-right:8px;">🔁 แก้ไขและส่งใหม่</span>'
+        ? '<span class="status-pill badge-pill badge-resubmit" style="margin-right:8px;">🔁 แก้ไขและส่งใหม่</span>'
         : '';
       const streamerBadge = isStreamer
-        ? '<span class="status-pill" style="color:#c58bff; margin-right:8px;">📺 สตรีมเมอร์</span>'
+        ? '<span class="status-pill badge-pill badge-streamer" style="margin-right:8px;">📺 สตรีมเมอร์</span>'
         : '';
       const historyList = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
       const totalPastComments = historyList.length + (record.previousComment ? 1 : 0);
       const prevCommentBadge = totalPastComments > 0
-        ? '<span class="status-pill prev-comment-badge" style="color:#f2c94c; margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
+        ? '<span class="status-pill badge-pill badge-prevcomment prev-comment-badge" style="margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
         : '';
       const previousCommentHtml = record.previousComment
         ? '<div class="field previous-comment-field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
@@ -583,6 +624,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         e.stopPropagation();
         const newStatus = card.querySelector('.status-select').value;
         const newComment = card.querySelector('.admin-comment').value.trim();
+        const oldStatus = record.status || 'pending'; // เก็บไว้ก่อนเขียนทับ เอาไว้ปรับตัวเลขบนแท็บ
         saveBtn.disabled = true;
         saveStatusEl.textContent = 'กำลังบันทึก...';
         // เก็บผลตรวจสอบรอบก่อนหน้า (ถ้ามี) ไว้ใน reviewHistory ก่อนเขียนทับ
@@ -623,6 +665,12 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           const ok = await window.storage.set(key, JSON.stringify(updated), true);
           if(!ok) throw new Error('save failed');
           saveStatusEl.textContent = 'บันทึกแล้ว ✓';
+          // ปรับตัวเลขบนแท็บทันที ไม่ต้องยิง count query ใหม่ (ประหยัด reads)
+          if(oldStatus !== newStatus){
+            statusCounts[oldStatus] = Math.max(0, (statusCounts[oldStatus] || 0) - 1);
+            statusCounts[newStatus] = (statusCounts[newStatus] || 0) + 1;
+            renderCounts();
+          }
           record.status = newStatus;
           record.adminComment = newComment;
           record.reviewedAt = updated.reviewedAt;
@@ -694,6 +742,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         try{
           await window.storage.delete(key, true);
           allRecords = allRecords.filter(x => x.key !== key);
+          statusCounts[record.status] = Math.max(0, (statusCounts[record.status] || 0) - 1);
+          renderCounts();
           card.remove();
           if(appList.children.length === 0) emptyMsg.style.display = 'block';
         }catch(err){
@@ -731,7 +781,10 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     renderList();
   });
 
-  document.getElementById('refreshBtn').addEventListener('click', loadApplications);
+  document.getElementById('refreshBtn').addEventListener('click', ()=>{
+    loadApplications();
+    refreshCounts();
+  });
 
   // ============ เฉลยคำตอบ (answer key) modal ============
   const akOverlay = document.getElementById('answerKeyOverlay');
@@ -830,6 +883,10 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     }
     cleanupStatus.textContent = 'ลบสำเร็จ ' + done + ' ใบ' + (failed ? (', ล้มเหลว ' + failed + ' ใบ') : '');
     document.getElementById('cleanupBtn').disabled = false;
+    if(done > 0){
+      statusCounts.rejected = Math.max(0, (statusCounts.rejected || 0) - done);
+      renderCounts();
+    }
     await fetchStatus('rejected', {silent:true});
   });
 
@@ -852,6 +909,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     document.getElementById('whoAmI').textContent = 'เข้าสู่ระบบในชื่อ: ' + staffUser.username;
     await loadAnswerKeys();
     fetchStatus('pending'); // โหลดเริ่มต้นเฉพาะ "รอตรวจสอบ" เท่านั้น เพื่อลด reads
+    refreshCounts(); // ตัวเลขบนแท็บ — ใช้ aggregation query ต้นทุนต่ำ ไม่กระทบเป้าหมายลด reads
     // หมายเหตุ: เอาการโหลดใหม่อัตโนมัติออกแล้วตามที่ขอ — หน้าเว็บจะไม่รีเฟรชข้อมูลเอง
     // ผู้ใช้ต้องกดปุ่ม "โหลดใหม่" เองเมื่อต้องการข้อมูลล่าสุด
   }
@@ -865,6 +923,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     allRecords = [];
     loadedStatuses = new Set();
     currentFilter = 'pending';
+    statusCounts = { pending:0, approved:0, approved_waiting:0, rejected:0, needs_revision:0 };
+    renderCounts();
     document.querySelectorAll('#filterRow .filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.filter === 'pending'));
   });
 

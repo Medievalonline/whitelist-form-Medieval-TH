@@ -101,5 +101,22 @@ window.storage = (function () {
     return { records, status, shared: true };
   }
 
-  return { get, set, delete: del, list, listByStatus };
+  // ====================================================================
+  // countByStatus(status) — นับจำนวนใบสมัครของสถานะนั้นๆ โดยใช้ Firestore
+  // aggregation query (getCountFromServer) ซึ่งนับที่ฝั่งเซิร์ฟเวอร์เลย
+  // "ไม่ต้องโหลดเอกสารมาทั้งหมด" — ต้นทุนคงที่ประมาณ 1 read ต่อการเรียก
+  // ไม่ว่าจะมีกี่เอกสารตรงเงื่อนไขก็ตาม (ถูกกว่า listByStatus() มากถ้าแค่
+  // ต้องการรู้ "จำนวน" ไม่ได้ต้องการเนื้อหาเอกสาร)
+  // ====================================================================
+  async function countByStatus(status) {
+    const { db, fs } = await init();
+    const q = fs.query(
+      fs.collection(db, COLLECTION),
+      fs.where("status", "==", status)
+    );
+    const snap = await fs.getCountFromServer(q);
+    return snap.data().count;
+  }
+
+  return { get, set, delete: del, list, listByStatus, countByStatus };
 })();
