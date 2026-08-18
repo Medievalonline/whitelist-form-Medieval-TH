@@ -13,7 +13,7 @@
 //    (เวลาที่เคยแจ้งเตือนไปแล้วครั้งล่าสุด) — ถ้าไม่ตรงกัน = มีผลตรวจใหม่
 //    ที่ยังไม่เคยแจ้ง (ครอบคลุมทั้งกรณีเปลี่ยนสถานะ และกรณีทีมงานแก้ comment
 //    ซ้ำในสถานะเดิม เช่น แก้ข้อความ "ต้องแก้ไข" รอบสอง)
-// 4. เปิด DM กับผู้สมัคร แล้วส่งข้อความบอกผลตรวจ + ลิงก์ไปหน้า status.html
+// 4. เปิด DM กับผู้สมัคร แล้วส่งข้อความบอกผลตรวจ + ลิงก์กลับไปหน้าสมัครเดิมตามประเภทใบสมัคร
 // 5. เขียนผลกลับ Firestore (notifiedReviewedAt / notifyError) กันแจ้งซ้ำ
 //
 // สคริปต์นี้ "ไม่ต้องการสิทธิ์ Manage Roles" เหมือน sync-discord-roles.js
@@ -30,8 +30,10 @@ const { getFirestore } = require("firebase-admin/firestore");
 // (แยกลิงก์ตามประเภทใบสมัคร record.type: 'streamer' หรือปกติ)
 // ---------------------------------------------------------------------
 const REGULAR_FORM_URL =
+  process.env.REGULAR_FORM_URL ||
   "https://bikiniz-fivem.github.io/whitelist-form-Medieval-TH/whitelist-form.html";
 const STREAMER_FORM_URL =
+  process.env.STREAMER_FORM_URL ||
   "https://bikiniz-fivem.github.io/whitelist-form-Medieval-TH/streamer-form.html";
 
 function formUrlForRecord(record) {
@@ -41,7 +43,7 @@ function formUrlForRecord(record) {
 const DISCORD_API = "https://discord.com/api/v10";
 const COLLECTION = "applications";
 
-// ต้องตรงกับ STATUS_LABELS ใน admin-chop-hee.html / status.html
+// ต้องตรงกับสถานะที่หน้า admin-chop-hee.html ใช้บันทึก
 const STATUS_MESSAGES = {
   approved: {
     title: "✅ ใบสมัคร Whitelist ของคุณผ่านการพิจารณาแล้ว!",

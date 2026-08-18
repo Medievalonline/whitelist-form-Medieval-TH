@@ -1,7 +1,7 @@
 // firebase-config.js
 // ====================================================================
 // กรอกค่า config จาก Firebase Console ของโปรเจกต์คุณ "ที่ไฟล์นี้ที่เดียว"
-// ไฟล์นี้ถูกโหลดใช้ร่วมกันทั้ง 3 หน้า: whitelist-form.html, status.html, admin.html
+// ไฟล์นี้ถูกโหลดใช้ร่วมกันทั้ง 3 หน้า: whitelist-form.html, streamer-form.html, admin-chop-hee.html
 // ทำให้ทั้ง 3 หน้าอ่าน/เขียนฐานข้อมูล Firestore เดียวกัน
 //
 // วิธีหาไฟล์นี้:

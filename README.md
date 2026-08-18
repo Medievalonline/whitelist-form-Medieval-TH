@@ -5,13 +5,16 @@
 ระบบประกอบด้วย:
 
 - 📝 Whitelist Application
-- 📊 ตรวจสอบสถานะใบสมัคร
+- 📊 ตรวจสอบและแก้ไขใบสมัครผ่านหน้าสมัครเดิม
 - 🛡️ Admin Panel สำหรับทีมงาน
 - 🔥 Firebase Firestore Database
 - 🎮 Discord ID Integration
 - 🤖 ระบบเพิ่มยศ Discord อัตโนมัติหลังอนุมัติ
 - ⚙️ GitHub Actions สำหรับ Sync ยศ Discord
-- 📡 ระบบ Status สำหรับตรวจสอบผลการสมัคร
+- 📡 ผู้สมัครตรวจผลและแก้ไขใบสมัครผ่านหน้าสมัครเดิม
+- 📩 ระบบส่ง DM แจ้งผลตรวจผ่าน Discord พร้อมลิงก์ฟอร์มเดิมแยกทั่วไป/สตรีมเมอร์
+
+รายละเอียดการติดตั้งส่วนแจ้งเตือนดูที่ [README-Discord-Notification.md](README-Discord-Notification.md)
 
 > **สำคัญ:** Repository นี้ไม่ใช่ Static HTML อย่างเดียว หากต้องการให้ระบบสมัคร Whitelist และ Admin ทำงานจริง จำเป็นต้องตั้งค่า Firebase Firestore ก่อน
 
@@ -40,8 +43,7 @@ whitelist-form-Medieval-TH/
 ├── scripts/
 │   └── sync-discord-roles.js
 │
-├── admin.html
-├── status.html
+├── admin-chop-hee.html
 ├── whitelist-form.html
 ├── streamer-form.html
 │
@@ -51,7 +53,8 @@ whitelist-form-Medieval-TH/
 │
 ├── package.json
 ├── README.md
-└── README-Firebase-Setup.md
+├── README-Firebase-Setup.md
+└── README-Discord-Notification.md
 ```
 
 Repository ปัจจุบันมีไฟล์หลักตามรายการข้างต้น รวมถึง Workflow สำหรับ Sync Discord Roles และ Node.js script สำหรับจัดการยศ Discord
@@ -73,14 +76,14 @@ whitelist-form.html
 Firebase Firestore
    │
    ▼
-admin.html
+admin-chop-hee.html
    │
    │ Staff อนุมัติ
    ▼
-status.html
-   │
-   ▼
 GitHub Actions
+   │
+   ├── ส่ง DM แจ้งผล + ลิงก์หน้าสมัครเดิม
+   ▼
    │
    ▼
 Discord Server
@@ -89,7 +92,7 @@ Discord Server
 เพิ่มยศ Approved
 ```
 
-เมื่อผู้สมัครส่งใบสมัคร ข้อมูลจะถูกเก็บใน Firestore จากนั้นทีมงานสามารถตรวจสอบและอนุมัติผ่าน `admin.html`
+เมื่อผู้สมัครส่งใบสมัคร ข้อมูลจะถูกเก็บใน Firestore จากนั้นทีมงานสามารถตรวจสอบและอนุมัติผ่าน `admin-chop-hee.html` ผู้สมัครจะกลับไปยังหน้าสมัครเดิมผ่านลิงก์ใน DM เพื่อดูสถานะ ความเห็น และแก้ไขใบสมัครต่อ
 
 เมื่อใบสมัครมีสถานะ `approved` ระบบ GitHub Actions จะตรวจสอบใบสมัครและสามารถเพิ่มยศ Discord ให้ผู้สมัครได้
 
@@ -338,8 +341,8 @@ Repository เองก็ระบุข้อจำกัดนี้ไว้
 
 ```text
 whitelist-form.html
-status.html
-admin.html
+streamer-form.html
+admin-chop-hee.html
 
 firebase-config.js
 firebase-storage.js
@@ -347,7 +350,7 @@ firebase-storage.js
 firestore.rules
 ```
 
-โดย `firebase-storage.js` ทำหน้าที่เชื่อมระบบ Storage ที่หน้าเว็บเรียกใช้กับ Firestore และทั้ง `whitelist-form.html`, `status.html` และ `admin.html` ถูกเตรียมให้ใช้ระบบนี้ร่วมกัน
+โดย `firebase-storage.js` ทำหน้าที่เชื่อมระบบ Storage ที่หน้าเว็บเรียกใช้กับ Firestore และหน้า `whitelist-form.html`, `streamer-form.html` และ `admin-chop-hee.html` ใช้ข้อมูลชุดเดียวกัน
 
 ---
 
@@ -396,16 +399,16 @@ https://USERNAME.github.io/whitelist-form-Medieval-TH/
 https://USERNAME.github.io/whitelist-form-Medieval-TH/whitelist-form.html
 ```
 
-หน้า Status:
+หน้าสมัครสตรีมเมอร์:
 
 ```text
-https://USERNAME.github.io/whitelist-form-Medieval-TH/status.html
+https://USERNAME.github.io/whitelist-form-Medieval-TH/streamer-form.html
 ```
 
 หน้า Admin:
 
 ```text
-https://USERNAME.github.io/whitelist-form-Medieval-TH/admin.html
+https://USERNAME.github.io/whitelist-form-Medieval-TH/admin-chop-hee.html
 ```
 
 ---
@@ -428,25 +431,11 @@ Firebase Firestore
 
 ---
 
-# 📊 หน้า Status
+# 📩 การแจ้งผลผู้สมัครผ่าน Discord
 
-ไฟล์:
+เมื่อทีมงานบันทึกผลตรวจใน `admin-chop-hee.html` ระบบ GitHub Actions จะส่ง DM ไปยัง Discord ของผู้สมัคร โดยเลือก URL กลับไปยังหน้าสมัครเดิมตามประเภทใบสมัคร ผู้สมัครสามารถดูความเห็นและแก้คำตอบเดิมจากหน้านั้นได้โดยตรง
 
-```text
-status.html
-```
-
-ใช้สำหรับให้ผู้สมัครตรวจสอบสถานะใบสมัคร เช่น:
-
-```text
-Pending
-Approved
-Rejected
-```
-
-เมื่อทีมงานเปลี่ยนสถานะใน Admin Panel ผู้สมัครสามารถกลับมาตรวจสอบผลผ่านหน้านี้ได้
-
-ระบบทั้ง 3 หน้าใช้ข้อมูลจาก Firestore ชุดเดียวกันตามการออกแบบของ Repository
+ระบบรองรับสถานะ `pending`, `approved`, `approved_waiting`, `rejected` และ `needs_revision` โดยจะไม่ส่ง DM ซ้ำสำหรับผลตรวจรอบเดิม
 
 ---
 
@@ -455,7 +444,7 @@ Rejected
 ไฟล์:
 
 ```text
-admin.html
+admin-chop-hee.html
 ```
 
 ใช้สำหรับทีมงานตรวจสอบใบสมัคร
@@ -470,7 +459,7 @@ admin.html
 ตรวจสอบสถานะ
 ```
 
-> **สำคัญ:** รายชื่อ Staff ที่กำหนดใน `admin.html` เป็นการควบคุมฝั่ง Browser ไม่ใช่ระบบ Authentication ที่ปลอดภัยจริง Repository ระบุข้อจำกัดนี้ไว้เช่นกัน
+> **สำคัญ:** รายชื่อ Staff ที่กำหนดใน `admin-chop-hee.html` เป็นการควบคุมฝั่ง Browser ไม่ใช่ระบบ Authentication ที่ปลอดภัยจริง Repository ระบุข้อจำกัดนี้ไว้เช่นกัน
 
 ---
 
@@ -864,7 +853,7 @@ Firebase Firestore
 ### 4. Staff เปิด Admin
 
 ```text
-admin.html
+admin-chop-hee.html
 ```
 
 ### 5. Staff ตรวจสอบใบสมัคร
@@ -899,10 +888,12 @@ Add Role
 discordRoleSynced = true
 ```
 
-### 10. ผู้สมัครตรวจสอบสถานะ
+### 10. ระบบแจ้งผลผู้สมัคร
 
 ```text
-status.html
+notify-applicants.js
+→ Discord DM
+→ ลิงก์หน้าสมัครเดิมตามประเภทใบสมัคร
 ```
 
 ---
@@ -1018,11 +1009,10 @@ GitHub Actions สำหรับ Discord Role Sync ก็จะใช้ Code �
 ### Website
 
 - [ ] `whitelist-form.html` เปิดได้
-- [ ] `status.html` เปิดได้
-- [ ] `admin.html` เปิดได้
+- [ ] `admin-chop-hee.html` เปิดได้
 - [ ] Form ส่งข้อมูลได้
 - [ ] ข้อมูลเข้า Firestore
-- [ ] Status เปลี่ยนได้
+- [ ] ทีมงานบันทึกผลตรวจได้
 - [ ] Admin เห็นใบสมัคร
 
 ### Discord
@@ -1102,14 +1092,15 @@ GitHub Actions สำหรับ Discord Role Sync ก็จะใช้ Code �
 | ไฟล์ | หน้าที่ |
 |---|---|
 | `whitelist-form.html` | หน้าใบสมัคร Whitelist |
-| `status.html` | ตรวจสอบสถานะใบสมัคร |
-| `admin.html` | ระบบจัดการใบสมัคร |
+| `admin-chop-hee.html` | ระบบจัดการใบสมัคร |
 | `streamer-form.html` | แบบฟอร์ม Streamer |
 | `firebase-config.js` | Firebase Web Configuration |
 | `firebase-storage.js` | ตัวเชื่อม Firestore |
 | `firestore.rules` | กฎความปลอดภัย Firestore |
 | `scripts/sync-discord-roles.js` | เพิ่มยศ Discord อัตโนมัติ |
-| `.github/workflows/sync-discord-roles.yml` | GitHub Actions |
+| `.github/workflows/sync-discord-roles.yml` | GitHub Actions สำหรับแอดยศและแจ้งผล Discord |
+| `scripts/notify-applicants.js` | ส่ง DM แจ้งผลตรวจและลิงก์ฟอร์มเดิม |
+| `README-Discord-Notification.md` | คู่มือติดตั้งระบบแจ้งผล Discord |
 | `package.json` | Node.js / Dependencies |
 
 ---

@@ -5,7 +5,7 @@
 // เพื่อไม่ต้องแก้ logic เดิมในแต่ละหน้าเลย แค่เปลี่ยนที่เก็บข้อมูลจริงด้านหลัง
 // จาก storage ชั่วคราวมาเป็น Firestore ที่ใช้งานได้จริงบนเว็บที่ deploy แล้ว
 //
-// ทุกหน้า (whitelist-form.html, status.html, admin.html) โหลดไฟล์นี้ร่วมกัน
+// ทุกหน้า (whitelist-form.html, streamer-form.html, admin-chop-hee.html) โหลดไฟล์นี้ร่วมกัน
 // จึงอ่าน/เขียนข้อมูลชุดเดียวกันใน collection "applications" ของ Firestore
 //
 // ไม่ต้องแก้ไฟล์นี้ — ไปตั้งค่าที่ firebase-config.js แทน
