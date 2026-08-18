@@ -2,6 +2,7 @@ name: Sync approved Discord roles
 
 on:
   schedule:
+    # ตรวจสอบทุก 5 นาที
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
@@ -11,25 +12,45 @@ permissions:
 jobs:
   sync-roles:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
+      # ขั้นตอนที่ 1: แอดยศ Discord ตามผลตรวจจาก Firebase
       - name: Sync approved Discord roles
         run: npm run sync
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
 
+      # ขั้นตอนที่ 2: ส่ง DM แจ้งผลให้ผู้สมัคร
+      # continue-on-error ช่วยให้ขั้นตอน Google Sheets ทำงานต่อได้
+      # แม้ผู้สมัครบางคนปิด DM หรือไม่ได้อยู่เซิร์ฟเวอร์เดียวกับบอท
       - name: Notify applicants by Discord DM
+        continue-on-error: true
         run: npm run notify
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
           REGULAR_FORM_URL: "https://medievalonline.github.io/whitelist-form-Medieval-TH/whitelist-form.html"
           STREAMER_FORM_URL: "https://medievalonline.github.io/whitelist-form-Medieval-TH/streamer-form.html"
+
+      # ขั้นตอนที่ 3: ซิงก์ข้อมูลใบสมัครลง Google Sheets ผ่าน Apps Script
+      # if: always ทำให้ขั้นตอนนี้ยังทำงาน แม้ขั้นตอน DM จะมีบางรายการล้มเหลว
+      - name: Sync applications to Google Sheets via Apps Script
+        if: always()
+        run: npm run sheets-sync
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          APPS_SCRIPT_WEB_APP_URL: ${{ vars.APPS_SCRIPT_WEB_APP_URL }}
+          APPS_SCRIPT_WEBHOOK_TOKEN: ${{ secrets.APPS_SCRIPT_WEBHOOK_TOKEN }}
