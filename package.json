@@ -7,7 +7,8 @@
   },
   "scripts": {
     "sync": "node scripts/sync-discord-roles.js",
-    "notify": "node scripts/notify-applicants.js"
+    "notify": "node scripts/notify-applicants.js",
+    "sheets-sync": "node scripts/sync-google-sheets-apps-script.js"
   },
   "dependencies": {
     "firebase-admin": "^12.6.0"

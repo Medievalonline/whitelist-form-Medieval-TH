@@ -13,8 +13,11 @@
 - ⚙️ GitHub Actions สำหรับ Sync ยศ Discord
 - 📡 ผู้สมัครตรวจผลและแก้ไขใบสมัครผ่านหน้าสมัครเดิม
 - 📩 ระบบส่ง DM แจ้งผลตรวจผ่าน Discord พร้อมลิงก์ฟอร์มเดิมแยกทั่วไป/สตรีมเมอร์
+- 📊 ระบบซิงก์ข้อมูลใบสมัครลง Google Sheets อัตโนมัติ
 
 รายละเอียดการติดตั้งส่วนแจ้งเตือนดูที่ [README-Discord-Notification.md](README-Discord-Notification.md)
+
+รายละเอียดการตั้งค่า Google Sheets ดูที่ [README-Google-Sheets-Setup.md](README-Google-Sheets-Setup.md)
 
 > **สำคัญ:** Repository นี้ไม่ใช่ Static HTML อย่างเดียว หากต้องการให้ระบบสมัคร Whitelist และ Admin ทำงานจริง จำเป็นต้องตั้งค่า Firebase Firestore ก่อน
 
@@ -1100,7 +1103,10 @@ GitHub Actions สำหรับ Discord Role Sync ก็จะใช้ Code �
 | `scripts/sync-discord-roles.js` | เพิ่มยศ Discord อัตโนมัติ |
 | `.github/workflows/sync-discord-roles.yml` | GitHub Actions สำหรับแอดยศและแจ้งผล Discord |
 | `scripts/notify-applicants.js` | ส่ง DM แจ้งผลตรวจและลิงก์ฟอร์มเดิม |
+| `scripts/sync-google-sheets-apps-script.js` | ส่งใบสมัครไปยัง Google Apps Script เพื่อบันทึกลง Google Sheets |
+| `apps-script/Code.gs` | ตัวรับข้อมูลและอัปเดต Google Sheets |
 | `README-Discord-Notification.md` | คู่มือติดตั้งระบบแจ้งผล Discord |
+| `README-Google-Sheets-Setup.md` | คู่มือตั้งค่า Google Sheets |
 | `package.json` | Node.js / Dependencies |
 
 ---
