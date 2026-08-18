@@ -20,7 +20,16 @@ jobs:
 
       - run: npm install
 
-      - run: npm run sync
+      - name: Sync approved Discord roles
+        run: npm run sync
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+      - name: Notify applicants by Discord DM
+        run: npm run notify
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          REGULAR_FORM_URL: "https://medievalonline.github.io/whitelist-form-Medieval-TH/whitelist-form.html"
+          STREAMER_FORM_URL: "https://medievalonline.github.io/whitelist-form-Medieval-TH/streamer-form.html"
