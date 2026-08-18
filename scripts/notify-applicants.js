@@ -47,7 +47,7 @@ const COLLECTION = "applications";
 const STATUS_MESSAGES = {
   approved: {
     title: "✅ ใบสมัคร Whitelist ของคุณผ่านการพิจารณาแล้ว!",
-    body: "ยินดีด้วยครับ ใบสมัครของคุณผ่านการตรวจสอบเรียบร้อยแล้ว แล้วพบกันในเซิฟเวอร์",
+    body: "ยินดีด้วย ใบสมัครของคุณผ่านแล้ว ได้รับยศ Whitelist เรียบร้อย แล้วพบกันในเซิฟเวอร์ครับ!!",
   },
   approved_waiting: {
     title: "✅ ใบสมัคร Whitelist ของคุณผ่านการพิจารณาแล้ว",
