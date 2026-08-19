@@ -430,8 +430,23 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     return '<div class="field"><div class="label">📜 ความเห็นของทีมงานก่อนหน้านี้ทั้งหมด (' + list.length + ' รายการ)</div></div>' + rows;
   }
 
+  // คืนชื่อผู้ให้ความเห็นครั้งล่าสุดจากประวัติเดิมของใบสมัคร
+  // ใช้กับรายการ "รอตรวจสอบ" ที่ผู้สมัครเคยได้รับความเห็นมาก่อนแล้ว
+  function getLatestPreviousReviewer(record, historyList){
+    const previousReviewer = String(record.previousReviewedBy || '').trim();
+    if(record.previousComment && previousReviewer) return previousReviewer;
+
+    for(let i = historyList.length - 1; i >= 0; i--){
+      const reviewer = String((historyList[i] && historyList[i].reviewedBy) || '').trim();
+      if(reviewer && reviewer !== '-') return reviewer;
+    }
+
+    return String(record.reviewedBy || '').trim();
+  }
+
   // ดึงเฉพาะใบสมัครของ "สถานะเดียว" ผ่าน listByStatus() — Firestore query ที่กรอง
   // status ให้ตั้งแต่ฝั่งเซิร์ฟเวอร์ อ่านเฉพาะเอกสารที่ status ตรงเงื่อนไขเท่านั้น
+
   // แล้ว merge เข้า allRecords (แทนที่ของเดิมด้วยสถานะเดียวกัน กันข้อมูลซ้ำ/ค้าง)
   async function fetchStatus(status, {silent=false}={}){
     if(statusInFlight === status) return; // กันกดซ้อน
@@ -564,11 +579,20 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           '</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
         : '';
       const reviewHistoryHtml = buildHistoryHtml(historyList);
+      const latestPreviousReviewer = getLatestPreviousReviewer(record, historyList);
+      const hasPreviousComments = totalPastComments > 0;
+      const isPending = (record.status || 'pending') === 'pending';
+      const previousReviewerMetaHtml = isPending && hasPreviousComments && latestPreviousReviewer
+        ? '<div class="meta reviewer-meta">ผู้ให้ความเห็นล่าสุด: ' + escapeHtml(latestPreviousReviewer) + '</div>'
+        : '';
       const reviewerInfoHtml = record.reviewedBy
         ? '<div class="field reviewer-field"><div class="label">ตรวจสอบล่าสุดโดย</div><div class="value">' +
           escapeHtml(record.reviewedBy) +
           (record.reviewedAt ? ' — ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') +
           '</div></div>'
+        : '';
+      const currentReviewerMetaHtml = record.reviewedBy && !(isPending && hasPreviousComments)
+        ? '<div class="meta reviewer-meta">ตรวจโดย: ' + escapeHtml(record.reviewedBy) + (record.reviewedAt ? ' · ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') + '</div>'
         : '';
 
       card.innerHTML =
@@ -578,11 +602,11 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
             '<div>' +
               '<div class="name">' + escapeHtml(record.discordUsername || record.discordId) + '</div>' +
               '<div class="meta">Steam: ' + escapeHtml(record.steamId) + ' · ' + new Date(record.submittedAt).toLocaleString('th-TH') + '</div>' +
-              (record.reviewedBy
-                ? '<div class="meta reviewer-meta">ตรวจโดย: ' + escapeHtml(record.reviewedBy) + (record.reviewedAt ? ' · ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') + '</div>'
-                : '') +
+              previousReviewerMetaHtml +
+              currentReviewerMetaHtml +
             '</div>' +
           '</div>' +
+
           '<div style="display:flex;align-items:center;">' + streamerBadge + resubmitBadge + prevCommentBadge +
           '<div class="status-pill main-status" style="color:' + st.color + ';background:' + st.bg + ';border-color:' + st.bg + '">' + st.label + '</div></div>' +
         '</div>' +
