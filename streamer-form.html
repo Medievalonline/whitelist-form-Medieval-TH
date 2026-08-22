@@ -210,6 +210,27 @@ main{
   pointer-events:none;
   filter:blur(1px);
 }
+.closed-panel{
+  display:none;
+  text-align:center;
+}
+.closed-panel.show{display:block;}
+.closed-panel h2{
+  margin:0 0 10px;
+  color:var(--red);
+  font-size:22px;
+}
+.closed-panel .closed-icon{
+  font-size:42px;
+  line-height:1;
+  margin-bottom:12px;
+}
+.closed-panel p{
+  margin:8px auto 0;
+  color:var(--ink-soft);
+  font-size:15px;
+  max-width:620px;
+}
 
 .q{
   padding:24px 4px;
@@ -399,6 +420,17 @@ footer{
 
   <main>
 
+    <!-- แสดงแทนหน้าล็อกอินและคำถามเมื่อปิดรับสมัคร -->
+    <div class="mo-frame closed-panel" id="closedPanel" aria-live="polite">
+      <div class="mo-frame-inner">
+        <span class="mo-corner tl"></span><span class="mo-corner tr"></span>
+        <span class="mo-corner bl"></span><span class="mo-corner br"></span>
+        <div class="closed-icon">⚠</div>
+        <h2>ปิดรับสมัครชั่วคราว</h2>
+        <p id="closedMessage">ขณะนี้ปิดรับสมัคร Whitelist สตรีมเมอร์ กรุณาติดตามประกาศจากทีมงานเพื่อทราบกำหนดการเปิดรับสมัครอีกครั้ง</p>
+      </div>
+    </div>
+
     <!-- AUTH GATE -->
     <div class="mo-frame">
       <div class="mo-frame-inner auth-card" id="authCard">
@@ -552,6 +584,14 @@ footer{
 <script src="firebase-storage.js"></script>
 <script>
 // ============================================================
+// ค่าเริ่มต้นสำรองกรณีระบบกลางอ่านค่าไม่ได้
+// การเปิด–ปิดและแก้ข้อความตามปกติให้จัดการจากหน้า admin.html
+// ============================================================
+window.WHITELIST_APPLICATION_OPEN = true;
+window.WHITELIST_CLOSED_MESSAGE = 'ขณะนี้ปิดรับสมัคร Whitelist สตรีมเมอร์ กรุณาติดตามประกาศจากทีมงานเพื่อทราบกำหนดการเปิดรับสมัครอีกครั้ง';
+</script>
+<script>
+// ============================================================
 // เชื่อมกับฐานข้อมูลกลางเดียวกับ whitelist-form.html / admin.html
 // ------------------------------------------------------------
 // ตั้งค่าจริงอยู่ที่ไฟล์ firebase-config.js (ไฟล์เดียว ใช้ร่วมกันทุกหน้า)
@@ -590,11 +630,50 @@ const Storage = {
 
   const authLoggedOut = document.getElementById('authLoggedOut');
   const authLoggedIn = document.getElementById('authLoggedIn');
+  const authCard = document.getElementById('authCard');
   const formSection = document.getElementById('formSection');
   const discordAvatarEl = document.getElementById('discordAvatar');
   const discordUsernameEl = document.getElementById('discordUsername');
-  const prevAppNote = document.getElementById('prevAppNote');
+    const prevAppNote = document.getElementById('prevAppNote');
   const q3b = document.getElementById('q3b');
+  const closedPanel = document.getElementById('closedPanel');
+  const closedMessage = document.getElementById('closedMessage');
+  const APPLICATION_SETTINGS_KEY = 'application:settings';
+  let APPLICATION_OPEN = window.WHITELIST_APPLICATION_OPEN !== false;
+  let applicationStateLoaded = false;
+
+  function applyApplicationState(){
+    if(APPLICATION_OPEN) return;
+    document.title = 'ปิดรับสมัคร | แบบฟอร์ม Whitelist สตรีมเมอร์ MEDIEVAL ROLEPLAY TH';
+    document.getElementById('heroSub').textContent = 'ขณะนี้ระบบปิดรับสมัครชั่วคราว';
+    document.getElementById('warningWrap').style.display = 'none';
+    authCard.closest('.mo-frame').style.display = 'none';
+    formSection.style.display = 'none';
+    closedMessage.textContent = window.WHITELIST_CLOSED_MESSAGE || 'ขณะนี้ปิดรับสมัครชั่วคราว กรุณาติดตามประกาศจากทีมงาน';
+    closedPanel.classList.add('show');
+  }
+
+  async function loadApplicationState(){
+    let open = window.WHITELIST_APPLICATION_OPEN !== false;
+    let message = window.WHITELIST_CLOSED_MESSAGE || 'ขณะนี้ปิดรับสมัครชั่วคราว กรุณาติดตามประกาศจากทีมงาน';
+    try{
+      const result = await window.storage.get(APPLICATION_SETTINGS_KEY, true);
+      if(result){
+        const settings = JSON.parse(result.value);
+        const formSettings = settings && settings.streamer;
+        if(formSettings && typeof formSettings.open === 'boolean') open = formSettings.open;
+        if(formSettings && typeof formSettings.message === 'string' && formSettings.message.trim()){
+          message = formSettings.message.trim();
+        }
+      }
+    }catch(e){
+      console.warn('loadApplicationState failed; using fallback setting:', e);
+    }
+    APPLICATION_OPEN = open;
+    window.WHITELIST_CLOSED_MESSAGE = message;
+    applicationStateLoaded = true;
+    applyApplicationState();
+  }
 
   let currentUser = null; // { id, username, avatarUrl }
   let prevRecord = null; // ใบสมัครเดิม (ถ้ามี ไม่ว่าประเภทไหน) — ผูกกับ Discord ID เดียวกัน
@@ -782,7 +861,11 @@ const Storage = {
       }
     }
   }
-  init();
+  async function startApplication(){
+    await loadApplicationState();
+    if(APPLICATION_OPEN) await init();
+  }
+  startApplication();
 
   // ============ FORM SUBMIT LOGIC ============
 
@@ -904,6 +987,18 @@ const Storage = {
 
   submitBtn.addEventListener('click', async ()=>{
     statusMsg.textContent = '';
+
+    if(!applicationStateLoaded){
+      statusMsg.textContent = 'กำลังตรวจสอบสถานะการรับสมัคร กรุณาลองใหม่อีกครั้ง';
+      return;
+    }
+
+    // อ่านสถานะล่าสุดซ้ำก่อนบันทึก เพื่อป้องกันการส่งจากแท็บที่เปิดค้างไว้
+    await loadApplicationState();
+    if(!APPLICATION_OPEN){
+      applyApplicationState();
+      return;
+    }
     statusMsg.style.color = 'var(--danger)';
 
     if(!currentUser){
