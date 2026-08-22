@@ -152,6 +152,32 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 .answerkey-q textarea:focus{ outline:none; border-color:var(--info); box-shadow:0 0 0 3px rgba(47,81,112,0.15); }
 .answerkey-foot{ display:flex; align-items:center; gap:12px; margin-top:14px; }
 .answerkey-status{ font-size:12.5px; color:var(--ink-soft); }
+
+/* ---- ควบคุมการเปิด–ปิดรับสมัคร ---- */
+.form-control-panel{ margin-bottom:20px; }
+.form-control-title{ margin:0; font-size:19px; color:var(--ink); }
+.form-control-description{ margin:4px 0 0; font-size:12.5px; color:var(--ink-soft); }
+.form-control-status{ font-size:12.5px; color:var(--ink-soft); }
+.form-control-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:18px; }
+.form-control-card{ background:rgba(255,255,255,0.25); border:1px solid var(--gold-dim); border-radius:6px; padding:16px; }
+.form-control-card h3{ margin:0 0 12px; color:var(--ink); font-size:16px; }
+.form-control-state-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.form-control-state-label{ font-size:13px; color:var(--ink-soft); }
+.form-control-state{ display:inline-block; padding:4px 11px; border-radius:20px; font-size:12px; font-weight:700; }
+.form-control-state.open{ color:#e5ffea; background:#1f6b3a; }
+.form-control-state.closed{ color:#ffe8e8; background:#8b2020; }
+.form-control-toggle{ background:transparent; border:1px solid var(--red); color:var(--red); padding:7px 13px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; font-weight:600; }
+.form-control-toggle:hover{ background:rgba(122,32,32,0.12); }
+.form-control-toggle.open-action{ border-color:var(--ok); color:var(--ok); }
+.form-control-toggle.open-action:hover{ background:rgba(61,107,63,0.12); }
+.form-control-toggle:disabled,.form-control-save:disabled{ opacity:.5; cursor:not-allowed; }
+.form-control-card label{ display:block; margin-bottom:6px; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+.form-control-message{ width:100%; min-height:96px; resize:vertical; background:rgba(255,255,255,0.45); border:1px solid var(--gold-dim); border-radius:3px; color:var(--ink); padding:10px 12px; font-family:'Noto Serif Thai',sans-serif; font-size:13.5px; }
+.form-control-message:focus{ outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(122,32,32,0.15); background:rgba(255,255,255,0.65); }
+.form-control-foot{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.form-control-save{ background:linear-gradient(180deg,var(--gold-bright),var(--gold)); color:var(--wood-dark); border:2px solid var(--wood-light); font-weight:700; font-size:12.5px; padding:8px 16px; border-radius:3px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+.form-control-card-status{ font-size:12px; color:var(--ink-soft); }
+@media (max-width:700px){ .form-control-grid{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -207,6 +233,50 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       <div class="loading" id="loadingMsg">กำลังโหลดใบสมัคร...</div>
       <div class="empty-msg" id="emptyMsg" style="display:none;">ยังไม่มีใบสมัครในระบบ</div>
       <div class="app-list" id="appList"></div>
+    </div>
+
+    <!-- แผงควบคุมสถานะและข้อความของฟอร์มทั้งสองประเภท -->
+    <div id="applicationControlWrap" style="display:none;">
+      <div class="mo-frame form-control-panel">
+        <div class="mo-frame-inner">
+          <span class="mo-corner tl"></span><span class="mo-corner tr"></span>
+          <span class="mo-corner bl"></span><span class="mo-corner br"></span>
+          <h2 class="form-control-title">ควบคุมการรับสมัคร</h2>
+          <p class="form-control-description">การตั้งค่าจะถูกบันทึกไว้ในระบบกลาง และมีผลกับหน้าฟอร์มทันทีเมื่อผู้สมัครเปิดหน้าใหม่หรือรีเฟรชหน้า</p>
+          <div class="form-control-grid">
+            <div class="form-control-card" data-control-card="regular">
+              <h3>Whitelist แบบทั่วไป</h3>
+              <div class="form-control-state-row">
+                <span class="form-control-state-label">สถานะปัจจุบัน</span>
+                <span class="form-control-state" id="applicationStateRegular">กำลังโหลด...</span>
+              </div>
+              <button type="button" class="form-control-toggle form-toggle-btn" data-form-type="regular">กำลังโหลด...</button>
+              <label for="applicationMessageRegular" style="margin-top:14px;">ข้อความเมื่อปิดรับสมัคร</label>
+              <textarea id="applicationMessageRegular" class="form-control-message" maxlength="500" placeholder="กรอกข้อความที่ต้องการให้ผู้สมัครเห็นเมื่อปิดรับสมัคร"></textarea>
+              <div class="form-control-foot">
+                <button type="button" class="form-control-save form-message-save-btn" data-form-type="regular">บันทึกข้อความ</button>
+                <span class="form-control-card-status" id="applicationControlStatusRegular"></span>
+              </div>
+            </div>
+
+            <div class="form-control-card" data-control-card="streamer">
+              <h3>Whitelist สตรีมเมอร์</h3>
+              <div class="form-control-state-row">
+                <span class="form-control-state-label">สถานะปัจจุบัน</span>
+                <span class="form-control-state" id="applicationStateStreamer">กำลังโหลด...</span>
+              </div>
+              <button type="button" class="form-control-toggle form-toggle-btn" data-form-type="streamer">กำลังโหลด...</button>
+              <label for="applicationMessageStreamer" style="margin-top:14px;">ข้อความเมื่อปิดรับสมัคร</label>
+              <textarea id="applicationMessageStreamer" class="form-control-message" maxlength="500" placeholder="กรอกข้อความที่ต้องการให้ผู้สมัครเห็นเมื่อปิดรับสมัคร"></textarea>
+              <div class="form-control-foot">
+                <button type="button" class="form-control-save form-message-save-btn" data-form-type="streamer">บันทึกข้อความ</button>
+                <span class="form-control-card-status" id="applicationControlStatusStreamer"></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-control-status" id="applicationControlStatus" aria-live="polite" style="margin-top:14px;"></div>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -388,13 +458,6 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     }
   }
 
-  const authWrap = document.getElementById('authWrap');
-  const panelWrap = document.getElementById('panelWrap');
-  const deniedMsg = document.getElementById('deniedMsg');
-  const appList = document.getElementById('appList');
-  const loadingMsg = document.getElementById('loadingMsg');
-  const emptyMsg = document.getElementById('emptyMsg');
-
   let staffUser = null;
   let allRecords = [];
   let currentFilter = 'pending'; // ค่าเริ่มต้น: โชว์แค่ "รอตรวจสอบ" เพื่อลด Firestore reads
@@ -403,6 +466,141 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
   let loadedStatuses = new Set(); // สถานะที่เคย fetch มาแล้วในเซสชันนี้ (กันโหลดซ้ำ)
   let statusInFlight = null; // กันกดรัวๆ แล้ว fetch สถานะเดียวกันซ้อนกันหลายรอบ
   let statusCounts = { pending:0, approved:0, approved_waiting:0, rejected:0, needs_revision:0 };
+
+  const APPLICATION_SETTINGS_KEY = 'application:settings';
+  const DEFAULT_APPLICATION_SETTINGS = {
+    regular: {
+      open: true,
+      message: 'ขณะนี้ปิดรับสมัคร Whitelist ทั่วไป กรุณาติดตามประกาศจากทีมงานเพื่อทราบกำหนดการเปิดรับสมัครอีกครั้ง'
+    },
+    streamer: {
+      open: true,
+      message: 'ขณะนี้ปิดรับสมัคร Whitelist สตรีมเมอร์ กรุณาติดตามประกาศจากทีมงานเพื่อทราบกำหนดการเปิดรับสมัครอีกครั้ง'
+    }
+  };
+  let applicationSettings = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+
+  function normalizeApplicationSettings(raw){
+    const next = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+    if(!raw || typeof raw !== 'object') return next;
+    ['regular','streamer'].forEach(type=>{
+      const source = raw[type];
+      if(!source || typeof source !== 'object') return;
+      next[type].open = source.open !== false;
+      if(typeof source.message === 'string' && source.message.trim()){
+        next[type].message = source.message.trim();
+      }
+    });
+    return next;
+  }
+
+  const authWrap = document.getElementById('authWrap');
+  const panelWrap = document.getElementById('panelWrap');
+  const deniedMsg = document.getElementById('deniedMsg');
+  const appList = document.getElementById('appList');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const applicationControlWrap = document.getElementById('applicationControlWrap');
+  const applicationControlStatus = document.getElementById('applicationControlStatus');
+
+  function renderApplicationSettings(){
+    ['regular','streamer'].forEach(type=>{
+      const settings = applicationSettings[type];
+      const suffix = type === 'regular' ? 'Regular' : 'Streamer';
+      const stateEl = document.getElementById('applicationState' + suffix);
+      const toggleBtn = document.querySelector('.form-toggle-btn[data-form-type="' + type + '"]');
+      const messageEl = document.getElementById('applicationMessage' + suffix);
+      if(!stateEl || !toggleBtn || !messageEl) return;
+
+      stateEl.textContent = settings.open ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร';
+      stateEl.className = 'form-control-state ' + (settings.open ? 'open' : 'closed');
+      toggleBtn.textContent = settings.open ? 'ปิดรับสมัคร' : 'เปิดรับสมัคร';
+      toggleBtn.classList.toggle('open-action', !settings.open);
+      messageEl.value = settings.message;
+    });
+  }
+
+  async function persistApplicationSettings(){
+    const payload = Object.assign({}, applicationSettings, {
+      updatedAt: new Date().toISOString(),
+      updatedBy: staffUser ? staffUser.username : null
+    });
+    const ok = await window.storage.set(APPLICATION_SETTINGS_KEY, JSON.stringify(payload), true);
+    if(!ok) throw new Error('application settings save failed');
+  }
+
+  async function loadApplicationSettings(){
+    try{
+      const result = await window.storage.get(APPLICATION_SETTINGS_KEY, true);
+      applicationSettings = result ? normalizeApplicationSettings(JSON.parse(result.value)) : JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+      renderApplicationSettings();
+      applicationControlStatus.textContent = result ? 'โหลดการตั้งค่าล่าสุดแล้ว' : 'ยังไม่มีการตั้งค่า ระบบใช้ค่าเริ่มต้นเป็นเปิดรับสมัคร';
+    }catch(e){
+      applicationSettings = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+      renderApplicationSettings();
+      applicationControlStatus.textContent = 'โหลดการตั้งค่าไม่สำเร็จ ระบบใช้ค่าเริ่มต้นเป็นเปิดรับสมัคร';
+      console.error('loadApplicationSettings failed:', e);
+    }
+  }
+
+  async function toggleApplicationType(type, button){
+    const previous = applicationSettings[type].open;
+    const statusEl = document.getElementById('applicationControlStatus' + (type === 'regular' ? 'Regular' : 'Streamer'));
+    button.disabled = true;
+    statusEl.textContent = 'กำลังบันทึก...';
+    applicationSettings[type].open = !previous;
+    try{
+      await persistApplicationSettings();
+      renderApplicationSettings();
+      statusEl.textContent = applicationSettings[type].open ? 'เปิดรับสมัครแล้ว ✓' : 'ปิดรับสมัครแล้ว ✓';
+      applicationControlStatus.textContent = 'บันทึกสถานะล่าสุดเมื่อ ' + new Date().toLocaleString('th-TH');
+    }catch(e){
+      applicationSettings[type].open = previous;
+      renderApplicationSettings();
+      statusEl.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+      applicationControlStatus.textContent = 'ไม่สามารถบันทึกสถานะได้';
+    }
+    button.disabled = false;
+  }
+
+  async function saveApplicationMessage(type, button){
+    const suffix = type === 'regular' ? 'Regular' : 'Streamer';
+    const messageEl = document.getElementById('applicationMessage' + suffix);
+    const statusEl = document.getElementById('applicationControlStatus' + suffix);
+    const message = messageEl.value.trim();
+    if(!message){
+      statusEl.textContent = 'กรุณากรอกข้อความก่อนบันทึก';
+      messageEl.focus();
+      return;
+    }
+
+    const previous = applicationSettings[type].message;
+    button.disabled = true;
+    statusEl.textContent = 'กำลังบันทึก...';
+    applicationSettings[type].message = message;
+    try{
+      await persistApplicationSettings();
+      renderApplicationSettings();
+      statusEl.textContent = 'บันทึกข้อความแล้ว ✓';
+      applicationControlStatus.textContent = 'บันทึกข้อความล่าสุดเมื่อ ' + new Date().toLocaleString('th-TH');
+    }catch(e){
+      applicationSettings[type].message = previous;
+      renderApplicationSettings();
+      statusEl.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+      applicationControlStatus.textContent = 'ไม่สามารถบันทึกข้อความได้';
+    }
+    button.disabled = false;
+  }
+
+  applicationControlWrap.addEventListener('click', (e)=>{
+    const toggleBtn = e.target.closest('.form-toggle-btn');
+    if(toggleBtn){
+      toggleApplicationType(toggleBtn.dataset.formType, toggleBtn);
+      return;
+    }
+    const saveBtn = e.target.closest('.form-message-save-btn');
+    if(saveBtn) saveApplicationMessage(saveBtn.dataset.formType, saveBtn);
+  });
 
   function escapeHtml(str){
     const d = document.createElement('div');
@@ -930,8 +1128,9 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     staffUser = { id: u.id, username: u.username + (u.discriminator && u.discriminator !== '0' ? '#' + u.discriminator : '') };
     authWrap.style.display = 'none';
     panelWrap.style.display = 'block';
+    applicationControlWrap.style.display = 'block';
     document.getElementById('whoAmI').textContent = 'เข้าสู่ระบบในชื่อ: ' + staffUser.username;
-    await loadAnswerKeys();
+    await Promise.all([loadAnswerKeys(), loadApplicationSettings()]);
     fetchStatus('pending'); // โหลดเริ่มต้นเฉพาะ "รอตรวจสอบ" เท่านั้น เพื่อลด reads
     refreshCounts(); // ตัวเลขบนแท็บ — ใช้ aggregation query ต้นทุนต่ำ ไม่กระทบเป้าหมายลด reads
     // หมายเหตุ: เอาการโหลดใหม่อัตโนมัติออกแล้วตามที่ขอ — หน้าเว็บจะไม่รีเฟรชข้อมูลเอง
@@ -943,6 +1142,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     staffUser = null;
     authWrap.style.display = 'block';
     panelWrap.style.display = 'none';
+    applicationControlWrap.style.display = 'none';
     deniedMsg.classList.remove('show');
     allRecords = [];
     loadedStatuses = new Set();
