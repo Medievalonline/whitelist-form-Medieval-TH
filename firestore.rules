@@ -34,18 +34,21 @@ service cloud.firestore {
       // บังคับ schema พื้นฐาน + ห้ามผู้สมัครตั้งค่าฟิลด์ผลตรวจสอบเอง
       // (status ต้องเป็น 'pending' เท่านั้น, ห้ามมี adminComment/reviewedAt/reviewedBy)
       allow create: if
-        discordId == request.resource.data.discordId
-        && request.resource.data.discordId is string
-        && request.resource.data.discordId.size() > 0
-        && request.resource.data.steamId is string
-        && (!('streamLink' in request.resource.data) || request.resource.data.streamLink is string)
-        && request.resource.data.submittedAt is string
-        && request.resource.data.status == 'pending'
-        && !('adminComment' in request.resource.data)
-        && !('reviewedAt' in request.resource.data)
-        && !('reviewedBy' in request.resource.data)
-        // กันเอกสารบวมผิดปกติ / spam field แปลกปลอม
-        && request.resource.data.size() < 20;
+        isPublicConfigDocument()
+        || (
+          discordId == request.resource.data.discordId
+          && request.resource.data.discordId is string
+          && request.resource.data.discordId.size() > 0
+          && request.resource.data.steamId is string
+          && (!('streamLink' in request.resource.data) || request.resource.data.streamLink is string)
+          && request.resource.data.submittedAt is string
+          && request.resource.data.status == 'pending'
+          && !('adminComment' in request.resource.data)
+          && !('reviewedAt' in request.resource.data)
+          && !('reviewedBy' in request.resource.data)
+          // กันเอกสารบวมผิดปกติ / spam field แปลกปลอม
+          && request.resource.data.size() < 20
+        );
 
       // ---- แก้ไขใบสมัคร ----
       // มี 2 กรณีที่อนุญาตให้ "update" เอกสารเดิมได้:
@@ -56,7 +59,17 @@ service cloud.firestore {
       //       ให้เหมือนกับตอน create แทบทั้งหมด แต่เป็น update เพราะเอกสารมีอยู่แล้ว
       //       (บั๊กเดิม: ไม่มีเงื่อนไขนี้ ทำให้การส่งใบแก้ไขใหม่ถูก Firestore
       //       ปฏิเสธเงียบๆ หน้า admin จึงไม่เห็นการเปลี่ยนแปลงใดๆ)
-      allow update: if isAdminReview() || isApplicantResubmission();
+      allow update: if
+        isPublicConfigDocument()
+        || isAdminReview()
+        || isApplicantResubmission();
+
+      // เอกสาร settings และ answerkey ใช้ร่วมกันระหว่างหน้า admin กับหน้าฟอร์ม
+      // ระบบปัจจุบันเป็น Discord OAuth ฝั่ง browser จึงไม่สามารถยืนยัน staff
+      // ใน Firestore Rules ได้โดยตรง — รายชื่อทีมงานยังคงถูกตรวจที่หน้า admin
+      function isPublicConfigDocument() {
+        return discordId in ['settings', 'answerkey:regular', 'answerkey:streamer'];
+      }
 
       function isAdminReview() {
         return request.resource.data.diff(resource.data).affectedKeys()
@@ -99,7 +112,7 @@ service cloud.firestore {
       // rule นี้ เพราะ reviewedAt เก็บเป็น string (ISO date) ไม่ใช่ Firestore
       // Timestamp จึงเทียบวันที่ในกฎได้ไม่สะดวก — ถ้าต้องการบังคับ 90 วันใน
       // ระดับฐานข้อมูลจริง ต้องเปลี่ยนไปเก็บ reviewedAt เป็น Timestamp แทน
-      allow delete: if resource.data.status == 'rejected';
+      allow delete: if !isPublicConfigDocument() && resource.data.status == 'rejected';
     }
 
     // ปิดกั้นทุก collection อื่นที่ไม่ได้ระบุไว้ (ค่าเริ่มต้นของ production

@@ -296,41 +296,17 @@ Firebase Console
 → Rules
 ```
 
-จากนั้นใช้ Rules ที่เหมาะสมกับระบบ
-
-ตัวอย่างสำหรับการทดสอบ:
-
-```javascript
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    match /applications/{discordId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-  }
-}
-```
-
-กด:
+จากนั้นเปิดไฟล์ `firestore.rules` ใน Repository ชุดนี้ แล้วคัดลอกเนื้อหาทั้งหมดไปวางแทน Rules เดิม จากนั้นกด:
 
 ```text
 Publish
 ```
 
+Rules เวอร์ชันนี้รองรับเอกสารที่ระบบใช้ร่วมกัน ได้แก่ `settings`, `answerkey:regular` และ `answerkey:streamer` หากยังใช้ตัวอย่าง Rules เก่าที่ไม่อนุญาตเอกสารเหล่านี้ ปุ่มเปิด–ปิดรับไวริสและการบันทึกเฉลยจากหน้า admin จะไม่ทำงาน
+
 ### ⚠️ คำเตือนด้านความปลอดภัย
 
-Rules แบบ:
-
-```text
-allow read: if true;
-allow write: if true;
-```
-
-**ไม่ควรใช้เป็นระบบ Production ที่มีข้อมูลจริงโดยไม่เข้าใจความเสี่ยง**
+โปรเจกต์นี้เป็น Static Site ที่ตรวจสอบทีมงานด้วย Discord OAuth ฝั่ง Browser ดังนั้นการตรวจสอบรายชื่อทีมงานยังไม่ใช่การยืนยันสิทธิ์ระดับ Server อย่างสมบูรณ์ ควรใช้ Rules จากไฟล์ `firestore.rules` ที่มากับโปรเจกต์ และไม่ควรเปิดสิทธิ์ `allow read/write: if true` ให้กับทุกเอกสารโดยไม่เข้าใจความเสี่ยง
 
 เพราะผู้ใช้งานสามารถเปิด Browser DevTools แล้วส่งข้อมูลเข้า Firestore โดยตรงได้ รวมถึงสามารถปลอม Discord ID หรือแก้ข้อมูลบางอย่างได้
 

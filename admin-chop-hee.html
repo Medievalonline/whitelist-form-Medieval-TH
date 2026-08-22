@@ -554,8 +554,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     }catch(e){
       applicationSettings = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
       renderApplicationSettings();
-      applicationControlStatus.textContent = 'โหลดการตั้งค่าไม่สำเร็จ ระบบใช้ค่าเริ่มต้นเป็นเปิดรับสมัคร';
-      console.error('loadApplicationSettings failed:', e);
+      applicationControlStatus.textContent = storageErrorMessage(e);
     }
   }
 
@@ -573,7 +572,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     }catch(e){
       applicationSettings[type].open = previous;
       renderApplicationSettings();
-      statusEl.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+      statusEl.textContent = storageErrorMessage(e);
       applicationControlStatus.textContent = 'ไม่สามารถบันทึกสถานะได้';
     }
     button.disabled = false;
@@ -602,7 +601,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     }catch(e){
       applicationSettings[type].message = previous;
       renderApplicationSettings();
-      statusEl.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+      statusEl.textContent = storageErrorMessage(e);
       applicationControlStatus.textContent = 'ไม่สามารถบันทึกข้อความได้';
     }
     button.disabled = false;
@@ -645,6 +644,15 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     const d = document.createElement('div');
     d.textContent = str == null ? '' : str;
     return d.innerHTML;
+  }
+
+  function storageErrorMessage(err){
+    console.error('Storage operation failed:', err);
+    const code = err && err.code ? String(err.code) : '';
+    if(code.includes('permission-denied') || code.includes('PERMISSION_DENIED')){
+      return 'ไม่มีสิทธิ์บันทึกข้อมูล กรุณา Publish ไฟล์ firestore.rules ใน Firebase Console ก่อน แล้วลองใหม่';
+    }
+    return 'บันทึกไม่สำเร็จ กรุณาตรวจสอบ Firebase config/Rules แล้วลองใหม่';
   }
 
   // ประวัติความเห็นของทีมงานทุกรอบ — แสดงไม่ว่ารอบนั้นจะให้สถานะอะไรก็ตาม
@@ -1100,7 +1108,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       akStatus.textContent = 'บันทึกเฉลยแล้ว ✓';
       renderList(); // อัปเดตเฉลยที่แทรกอยู่ใต้คำตอบผู้สมัครทุกใบให้ตรงกับของใหม่
     }catch(e){
-      akStatus.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+      akStatus.textContent = storageErrorMessage(e);
     }
   });
 

@@ -19,22 +19,15 @@
    - ตั้งชื่อแอปอะไรก็ได้ → **Register app**
    - Firebase จะแสดัง config object (`apiKey`, `authDomain`, `projectId` ฯลฯ)
 4. คัดลอกค่าไปแปะแทนที่ `YOUR_...` ใน `firebase-config.js`
-5. ไปที่ **Firestore Database → Rules** แล้ววางกฎด้านล่าง แทนที่กฎ default → **Publish**
+5. ไปที่ **Firestore Database → Rules** แล้วเปิดไฟล์ `firestore.rules` จากชุดไฟล์นี้ คัดลอกทั้งหมดไปแทนที่กฎเดิม แล้วกด **Publish**
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /applications/{discordId} {
-      allow read: if true;
-      allow write: if true;
-    }
-  }
-}
-```
+   **สำคัญ:** ต้อง Publish `firestore.rules` เวอร์ชันล่าสุดด้วย เพราะหน้า `admin-chop-hee.html` ใช้เขียนเอกสาร `settings`, `answerkey:regular` และ `answerkey:streamer` หากยังใช้กฎตัวอย่างเก่าหรือกฎที่ไม่อนุญาตเอกสาร 3 รายการนี้ ปุ่มเปิด–ปิดรับไวริสและปุ่มบันทึกเฉลยจะไม่ทำงาน
 
-6. อัปโหลดไฟล์ทั้งหมด (5 ไฟล์: 3 หน้า HTML + `firebase-config.js` + `firebase-storage.js`)
-   ไปที่ repo GitHub Pages เดิม (`whitelist-form-Medieval-TH`) แทนไฟล์เก่า แล้ว push
+   หลัง Publish แล้ว ให้กลับไปหน้า admin และลองกดบันทึกอีกครั้ง
+
+6. อัปโหลดไฟล์หน้าเว็บทั้งหมด (3 หน้า HTML + `firebase-config.js` + `firebase-storage.js`) ไปที่ repo GitHub Pages เดิม (`whitelist-form-Medieval-TH`) แทนไฟล์เก่า แล้ว push
+
+   ส่วน `firestore.rules` ให้นำไป Publish ใน Firebase Console ตามข้อ 5 ไม่ใช่ไฟล์ที่ผู้สมัครต้องเปิดผ่านเว็บไซต์
 
 เท่านี้หน้าสมัครทั่วไป หน้าสมัครสตรีมเมอร์ และหน้าแอดมินก็เชื่อมกันผ่านฐานข้อมูลจริงแล้ว: ผู้สมัครส่งใบสมัคร → ทีมงานตรวจ/อนุมัติ → GitHub Actions ส่ง DM กลับไปยังหน้าสมัครเดิมตามประเภทใบสมัคร เพื่อให้ผู้สมัครเห็นความเห็นและแก้ไขคำตอบต่อ
 
