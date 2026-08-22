@@ -177,7 +177,17 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 .form-control-foot{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
 .form-control-save{ background:linear-gradient(180deg,var(--gold-bright),var(--gold)); color:var(--wood-dark); border:2px solid var(--wood-light); font-weight:700; font-size:12.5px; padding:8px 16px; border-radius:3px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
 .form-control-card-status{ font-size:12px; color:var(--ink-soft); }
-@media (max-width:700px){ .form-control-grid{ grid-template-columns:1fr; } }
+
+/* ---- เมนูควบคุมการเปิด–ปิดรับไวริสแบบหน้าต่างแยก ---- */
+.application-control-btn{ background:rgba(122,32,32,0.18); border:1px solid var(--red-bright); color:#ffd7c7; padding:7px 14px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; font-weight:700; }
+.application-control-btn:hover{ background:rgba(156,44,44,0.32); }
+#applicationControlWrap{ position:fixed; inset:0; z-index:90; display:none !important; align-items:flex-start; justify-content:center; padding:30px 14px; overflow-y:auto; background:rgba(10,7,3,0.76); }
+#applicationControlWrap.open{ display:flex !important; }
+#applicationControlWrap > .mo-frame{ width:100%; max-width:900px; margin:0 0 30px; }
+.application-control-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:4px; }
+.application-control-close{ background:transparent; border:1px solid var(--ink-soft); color:var(--ink-soft); padding:5px 11px; border-radius:3px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; white-space:nowrap; }
+.application-control-close:hover{ border-color:var(--red); color:var(--red); }
+@media (max-width:700px){ .form-control-grid{ grid-template-columns:1fr; } .application-control-head{ align-items:flex-start; } }
 </style>
 </head>
 <body>
@@ -221,6 +231,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           <button class="filter-btn" data-type-filter="streamer">📺 สตรีมเมอร์</button>
         </div>
         <button class="refresh-btn" id="refreshBtn">โหลดใหม่</button>
+        <button class="application-control-btn" id="applicationControlBtn" type="button">เปิด–ปิดรับไวริส</button>
         <button class="answerkey-btn" id="answerKeyBtn">📖 เฉลยคำตอบ</button>
         <button class="cleanup-btn" id="cleanupBtn">ลบใบสมัคร Rejected เกิน 90 วัน</button>
       </div>
@@ -235,13 +246,16 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
       <div class="app-list" id="appList"></div>
     </div>
 
-    <!-- แผงควบคุมสถานะและข้อความของฟอร์มทั้งสองประเภท -->
-    <div id="applicationControlWrap" style="display:none;">
+    <!-- หน้าต่างควบคุมสถานะและข้อความของฟอร์มทั้งสองประเภท -->
+    <div id="applicationControlWrap" aria-hidden="true">
       <div class="mo-frame form-control-panel">
         <div class="mo-frame-inner">
           <span class="mo-corner tl"></span><span class="mo-corner tr"></span>
           <span class="mo-corner bl"></span><span class="mo-corner br"></span>
-          <h2 class="form-control-title">ควบคุมการรับสมัคร</h2>
+          <div class="application-control-head">
+            <h2 class="form-control-title">เปิด–ปิดรับไวริส</h2>
+            <button type="button" class="application-control-close" id="applicationControlCloseBtn">ปิด ✕</button>
+          </div>
           <p class="form-control-description">การตั้งค่าจะถูกบันทึกไว้ในระบบกลาง และมีผลกับหน้าฟอร์มทันทีเมื่อผู้สมัครเปิดหน้าใหม่หรือรีเฟรชหน้า</p>
           <div class="form-control-grid">
             <div class="form-control-card" data-control-card="regular">
@@ -501,6 +515,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
   const loadingMsg = document.getElementById('loadingMsg');
   const emptyMsg = document.getElementById('emptyMsg');
   const applicationControlWrap = document.getElementById('applicationControlWrap');
+  const applicationControlBtn = document.getElementById('applicationControlBtn');
+  const applicationControlCloseBtn = document.getElementById('applicationControlCloseBtn');
   const applicationControlStatus = document.getElementById('applicationControlStatus');
 
   function renderApplicationSettings(){
@@ -592,7 +608,30 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     button.disabled = false;
   }
 
+  function openApplicationControl(){
+    renderApplicationSettings();
+    applicationControlWrap.classList.add('open');
+    applicationControlWrap.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeApplicationControl(){
+    applicationControlWrap.classList.remove('open');
+    applicationControlWrap.setAttribute('aria-hidden', 'true');
+  }
+
+  applicationControlBtn.addEventListener('click', openApplicationControl);
+  applicationControlCloseBtn.addEventListener('click', closeApplicationControl);
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && applicationControlWrap.classList.contains('open')){
+      closeApplicationControl();
+    }
+  });
   applicationControlWrap.addEventListener('click', (e)=>{
+    if(e.target === applicationControlWrap){
+      closeApplicationControl();
+      return;
+    }
+
     const toggleBtn = e.target.closest('.form-toggle-btn');
     if(toggleBtn){
       toggleApplicationType(toggleBtn.dataset.formType, toggleBtn);
@@ -1143,6 +1182,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
     authWrap.style.display = 'block';
     panelWrap.style.display = 'none';
     applicationControlWrap.style.display = 'none';
+    closeApplicationControl();
     deniedMsg.classList.remove('show');
     allRecords = [];
     loadedStatuses = new Set();
