@@ -285,7 +285,7 @@ textarea, input[type="text"]{
   resize:vertical;
   transition:border-color .15s, box-shadow .15s;
 }
-textarea{min-height:100px;}
+textarea{min-height:100px; overflow-y:hidden;}
 textarea:focus, input[type="text"]:focus{
   outline:none;
   border-color:var(--red);
@@ -642,6 +642,28 @@ const Storage = {
   let APPLICATION_OPEN = window.WHITELIST_APPLICATION_OPEN !== false;
   let applicationStateLoaded = false;
 
+  // ============ AUTO-GROW TEXTAREAS ============
+  // ทำให้ทุกช่อง <textarea> ขยายความสูงลงล่างเองตามเนื้อหาที่พิมพ์
+  // เพื่อให้เห็นคำตอบทั้งหมดโดยไม่ต้องเลื่อน scroll ในช่อง
+  function autoGrow(el){
+    if(!el) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
+  }
+
+  function initAutoGrowTextareas(){
+    document.querySelectorAll('textarea').forEach(el=>{
+      autoGrow(el);
+      el.addEventListener('input', ()=> autoGrow(el));
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initAutoGrowTextareas);
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    initAutoGrowTextareas();
+  }
+  // ================================================
+
   function applyApplicationState(){
     if(APPLICATION_OPEN) return;
     document.title = 'ปิดรับสมัคร | แบบฟอร์ม Whitelist สตรีมเมอร์ MEDIEVAL ROLEPLAY TH';
@@ -795,6 +817,9 @@ const Storage = {
           if(el) el.value = record.answers[id];
         });
       }
+      // ค่าที่ pre-fill เข้าไปด้วย .value ไม่ทริกเกอร์ event 'input' เอง
+      // จึงต้องเรียก autoGrow ให้ทุกช่องคำนวณความสูงใหม่ตามเนื้อหาที่เพิ่งใส่เข้าไป
+      document.querySelectorAll('textarea').forEach(autoGrow);
     }catch(e){
       prevRecord = null;
       console.error('checkPreviousApplication failed:', e);
