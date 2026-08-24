@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทีมงาน — ตรวจสอบใบสมัคร Whitelist | MEDIEVAL ONLINE ROLEPLAY TH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@700&family=Noto+Serif+Thai:wght@400;500;600;700&display=swap');
+
+:root{
+  --wood-dark:#241a10; --wood:#3a2814; --wood-light:#5a3f22;
+  --gold:#c9a35c; --gold-bright:#e8c983; --gold-dim:#8a6a3a;
+  --parchment:#e9d9b3; --parchment-dark:#d8c497;
+  --ink:#3b2b18; --ink-soft:#5a4630;
+  --red:#7a2020; --red-bright:#9c2c2c;
+  --ok:#3d6b3f; --ok-bright:#5c9c5f;
+  --danger:#7a2020; --danger-bright:#9c2c2c;
+  --info:#2f5170; --info-bright:#3f6f96;
+  --shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Noto Serif Thai', Georgia, serif;
+  line-height:1.7;
+  color:var(--ink);
+  background:
+    radial-gradient(900px 500px at 15% -20%, #2a1c0f 0%, transparent 60%),
+    linear-gradient(180deg, #1c130a, #14100a 100%);
+  padding-bottom:80px;
+}
+
+.gold-bar{ height:10px; width:100%; background: linear-gradient(90deg, transparent, var(--gold-dim) 15%, var(--gold-bright) 50%, var(--gold-dim) 85%, transparent); opacity:.9; }
+header.hero{ padding:40px 20px 28px; text-align:center; }
+.tagline{ display:inline-block; font-family:'Noto Serif Thai', serif; font-size:11px; letter-spacing:.35em; color:var(--gold-dim); border:1px solid var(--gold-dim); padding:6px 14px; border-radius:2px; text-transform:uppercase; margin-bottom:16px; }
+h1{ font-family:'Noto Serif Thai','Cinzel',serif; margin:0; font-weight:700; font-size:clamp(24px,4.6vw,34px); letter-spacing:.02em; color:var(--gold-bright); text-shadow:0 2px 14px rgba(0,0,0,.6); }
+h1 span{color:var(--parchment);}
+
+main{ max-width:1000px; margin:36px auto; padding:0 20px; }
+
+/* ---- Parchment / wood frame wrapper, matching whitelist-form.html ---- */
+.mo-frame{ background:linear-gradient(180deg, var(--parchment), var(--parchment-dark)); border-radius:10px; padding:2px; box-shadow:var(--shadow); position:relative; margin-bottom:20px; }
+.mo-frame-inner{ border-radius:8px; border:3px solid var(--wood-light); outline:1px solid var(--gold-dim); outline-offset:-7px; padding:26px clamp(14px,4vw,34px); position:relative; }
+.mo-corner{position:absolute; width:22px; height:22px; border:2px solid var(--gold); opacity:.85; pointer-events:none;}
+.mo-corner.tl{top:6px;left:6px;border-right:none;border-bottom:none}
+.mo-corner.tr{top:6px;right:6px;border-left:none;border-bottom:none}
+.mo-corner.bl{bottom:6px;left:6px;border-right:none;border-top:none}
+.mo-corner.br{bottom:6px;right:6px;border-left:none;border-top:none}
+
+.auth-card{ text-align:center; max-width:520px; margin:0 auto; }
+.discord-btn{ display:inline-flex; align-items:center; gap:10px; background:#5865F2; color:#fff; border:none; font-family:'Noto Serif Thai', sans-serif; font-weight:600; font-size:15px; padding:13px 28px; border-radius:4px; cursor:pointer; text-decoration:none; transition:filter .15s; }
+.discord-btn:hover{filter:brightness(1.1);}
+.redirect-hint{ margin-top:16px; font-size:11px; color:var(--ink-soft); word-break:break-all; }
+.denied{ color:var(--red-bright); font-size:14px; margin-top:14px; display:none; font-weight:600; }
+.denied.show{display:block;}
+
+.toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+.toolbar .who{ font-size:13px; color:#c7b990; }
+.filter-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.filter-btn{
+  background:rgba(233,217,179,0.08); border:1px solid var(--gold-dim); color:#c7b990;
+  padding:7px 14px; border-radius:20px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif;
+  position:relative;
+}
+.filter-btn.active{ border-color:var(--gold-bright); color:var(--gold-bright); background:rgba(233,217,179,0.16); }
+.count-badge{
+  position:absolute; top:-9px; right:-9px; min-width:19px; height:19px; padding:0 5px;
+  background:var(--red-bright); color:#fff; border:1px solid var(--wood-dark);
+  border-radius:999px; font-size:10.5px; font-weight:700; line-height:1;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.5);
+  font-family:'Cinzel', sans-serif;
+}
+.count-badge.zero{ background:#5a4a3a; opacity:.55; }
+.refresh-btn{ background:rgba(233,217,179,0.08); border:1px solid var(--gold-dim); color:var(--parchment); padding:7px 14px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+
+.app-list{ display:flex; flex-direction:column; gap:14px; }
+.app-card{ background:linear-gradient(180deg, var(--parchment), var(--parchment-dark)); border-radius:10px; padding:2px; box-shadow:var(--shadow); }
+.app-card-inner{ border-radius:8px; border:3px solid var(--wood-light); outline:1px solid var(--gold-dim); outline-offset:-6px; overflow:hidden; }
+.app-card-head{
+  padding:16px 20px; display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; gap:12px; flex-wrap:wrap;
+}
+.app-card-head .left{ display:flex; align-items:center; gap:12px; }
+.app-card-head img{ width:32px; height:32px; border-radius:50%; border:2px solid var(--gold-dim); }
+.app-card-head .name{ font-weight:600; font-size:14.5px; color:var(--ink); }
+.app-card-head .meta{ font-size:12px; color:var(--ink-soft); }
+.status-pill{ padding:6px 14px; border-radius:20px; font-weight:700; font-size:12px; border:1px solid currentColor; white-space:nowrap; background:rgba(255,255,255,0.25); }
+.reviewer-meta{ color:var(--info); font-weight:600; }
+.reviewer-field{ background:rgba(47,81,112,0.08); border-left:3px solid var(--info-bright); padding:10px 14px; border-radius:3px; margin-top:2px; }
+.reviewer-field .label{ color:var(--info); }
+.badge-pill{ padding:5px 12px; border-radius:20px; font-weight:700; font-size:11.5px; white-space:nowrap; border:1px solid rgba(0,0,0,.3); box-shadow:0 1px 2px rgba(0,0,0,.25); }
+.badge-streamer{ background:#3d2a63; color:#f0e2ff; }
+.badge-resubmit{ background:#1f4f78; color:#eaf6ff; }
+.badge-prevcomment{ background:#8a6412; color:#fff6dc; }
+.app-card-body{ display:none; padding:0 20px 20px; border-top:2px solid var(--gold-dim); }
+.app-card-body.open{ display:block; }
+.field{ padding:14px 0; border-bottom:1px solid var(--gold-dim); }
+.field:last-of-type{ border-bottom:none; }
+.field .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-soft); margin-bottom:4px; font-weight:600; }
+.field .value{ font-size:14px; white-space:pre-wrap; color:var(--ink); }
+.review-row{ margin-top:16px; padding-top:16px; border-top:1px dashed var(--gold-dim); display:flex; flex-direction:column; gap:10px; }
+select, textarea.admin-comment{
+  width:100%; background:rgba(255,255,255,0.45); border:1px solid var(--gold-dim); border-radius:3px;
+  color:var(--ink); padding:10px 12px; font-family:'Noto Serif Thai', sans-serif; font-size:14px;
+}
+textarea.admin-comment{ min-height:70px; resize:vertical; }
+textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(122,32,32,0.15); background:rgba(255,255,255,0.65); }
+.review-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.save-btn{
+  background:linear-gradient(180deg, var(--gold-bright), var(--gold)); color:var(--wood-dark); border:2px solid var(--wood-light); font-weight:700; font-size:13.5px;
+  padding:10px 22px; border-radius:3px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; letter-spacing:.03em;
+}
+.save-btn:disabled{opacity:.5; cursor:not-allowed;}
+.delete-btn{
+  background:transparent; color:var(--red); border:1px solid var(--red); font-weight:600; font-size:13px;
+  padding:9px 18px; border-radius:3px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif;
+}
+.delete-btn:hover{ background:rgba(122,32,32,0.12); }
+.delete-btn:disabled{opacity:.5; cursor:not-allowed;}
+.cleanup-btn{
+  background:transparent; color:var(--red-bright); border:1px solid var(--red-bright); font-size:12.5px;
+  padding:7px 14px; border-radius:4px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif;
+}
+.cleanup-btn:hover{ background:rgba(122,32,32,0.12); }
+.cleanup-btn:disabled{opacity:.5; cursor:not-allowed;}
+.save-status{ font-size:12.5px; color:#c7b990; }
+.empty-msg{ text-align:center; color:#c7b990; padding:40px 0; }
+.loading{ text-align:center; color:#c7b990; font-size:13px; padding:30px 0; }
+
+/* ---- เฉลยคำตอบ (answer key) ---- */
+.answerkey-btn{ background:rgba(63,111,150,0.18); border:1px solid var(--info-bright); color:#bfe0ff; padding:7px 14px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+.hint-box{ margin-top:8px; padding:9px 12px; background:rgba(47,81,112,0.12); border-left:3px solid var(--info-bright); border-radius:3px; }
+.hint-box .hint-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--info); font-weight:700; margin-bottom:3px; }
+.hint-box .hint-text{ font-size:13px; color:var(--ink); white-space:pre-wrap; }
+.hint-box.empty .hint-text{ color:var(--ink-soft); font-style:italic; }
+
+.answerkey-overlay{ position:fixed; inset:0; background:rgba(10,7,3,0.72); display:none; align-items:flex-start; justify-content:center; padding:30px 14px; overflow-y:auto; z-index:100; }
+.answerkey-overlay.open{ display:flex; }
+.answerkey-modal{ background:linear-gradient(180deg, var(--parchment), var(--parchment-dark)); border-radius:10px; padding:2px; box-shadow:var(--shadow); max-width:720px; width:100%; margin-bottom:30px; }
+.answerkey-modal-inner{ border-radius:8px; border:3px solid var(--wood-light); outline:1px solid var(--gold-dim); outline-offset:-6px; padding:22px clamp(14px,3vw,28px); }
+.answerkey-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.answerkey-head h2{ margin:0; font-family:'Noto Serif Thai',serif; font-size:18px; color:var(--ink); }
+.answerkey-close{ background:none; border:1px solid var(--ink-soft); color:var(--ink-soft); border-radius:3px; padding:4px 10px; cursor:pointer; font-size:13px; }
+.answerkey-tabs{ display:flex; gap:8px; margin-bottom:16px; }
+.answerkey-tab{ background:rgba(255,255,255,0.3); border:1px solid var(--gold-dim); color:var(--ink); padding:7px 16px; border-radius:20px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+.answerkey-tab.active{ background:var(--gold-bright); border-color:var(--wood-light); font-weight:700; }
+.answerkey-q{ padding:12px 0; border-bottom:1px solid var(--gold-dim); }
+.answerkey-q:last-of-type{ border-bottom:none; }
+.answerkey-q .aq-label{ font-size:13px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+.answerkey-q textarea{ width:100%; min-height:60px; background:rgba(255,255,255,0.5); border:1px solid var(--gold-dim); border-radius:3px; color:var(--ink); padding:9px 11px; font-family:'Noto Serif Thai',sans-serif; font-size:13.5px; resize:vertical; }
+.answerkey-q textarea:focus{ outline:none; border-color:var(--info); box-shadow:0 0 0 3px rgba(47,81,112,0.15); }
+.answerkey-foot{ display:flex; align-items:center; gap:12px; margin-top:14px; }
+.answerkey-status{ font-size:12.5px; color:var(--ink-soft); }
+
+/* ---- ควบคุมการเปิด–ปิดรับสมัคร ---- */
+.form-control-panel{ margin-bottom:20px; }
+.form-control-title{ margin:0; font-size:19px; color:var(--ink); }
+.form-control-description{ margin:4px 0 0; font-size:12.5px; color:var(--ink-soft); }
+.form-control-status{ font-size:12.5px; color:var(--ink-soft); }
+.form-control-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:18px; }
+.form-control-card{ background:rgba(255,255,255,0.25); border:1px solid var(--gold-dim); border-radius:6px; padding:16px; }
+.form-control-card h3{ margin:0 0 12px; color:var(--ink); font-size:16px; }
+.form-control-state-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.form-control-state-label{ font-size:13px; color:var(--ink-soft); }
+.form-control-state{ display:inline-block; padding:4px 11px; border-radius:20px; font-size:12px; font-weight:700; }
+.form-control-state.open{ color:#e5ffea; background:#1f6b3a; }
+.form-control-state.closed{ color:#ffe8e8; background:#8b2020; }
+.form-control-toggle{ background:transparent; border:1px solid var(--red); color:var(--red); padding:7px 13px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; font-weight:600; }
+.form-control-toggle:hover{ background:rgba(122,32,32,0.12); }
+.form-control-toggle.open-action{ border-color:var(--ok); color:var(--ok); }
+.form-control-toggle.open-action:hover{ background:rgba(61,107,63,0.12); }
+.form-control-toggle:disabled,.form-control-save:disabled{ opacity:.5; cursor:not-allowed; }
+.form-control-card label{ display:block; margin-bottom:6px; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+.form-control-message{ width:100%; min-height:96px; resize:vertical; background:rgba(255,255,255,0.45); border:1px solid var(--gold-dim); border-radius:3px; color:var(--ink); padding:10px 12px; font-family:'Noto Serif Thai',sans-serif; font-size:13.5px; }
+.form-control-message:focus{ outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(122,32,32,0.15); background:rgba(255,255,255,0.65); }
+.form-control-foot{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.form-control-save{ background:linear-gradient(180deg,var(--gold-bright),var(--gold)); color:var(--wood-dark); border:2px solid var(--wood-light); font-weight:700; font-size:12.5px; padding:8px 16px; border-radius:3px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; }
+.form-control-card-status{ font-size:12px; color:var(--ink-soft); }
+
+/* ---- เมนูควบคุมการเปิด–ปิดรับไวริสแบบหน้าต่างแยก ---- */
+.application-control-btn{ background:rgba(122,32,32,0.18); border:1px solid var(--red-bright); color:#ffd7c7; padding:7px 14px; border-radius:4px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; font-weight:700; }
+.application-control-btn:hover{ background:rgba(156,44,44,0.32); }
+#applicationControlWrap{ position:fixed; inset:0; z-index:90; display:none !important; align-items:flex-start; justify-content:center; padding:30px 14px; overflow-y:auto; background:rgba(10,7,3,0.76); }
+#applicationControlWrap.open{ display:flex !important; }
+#applicationControlWrap > .mo-frame{ width:100%; max-width:900px; margin:0 0 30px; }
+.application-control-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:4px; }
+.application-control-close{ background:transparent; border:1px solid var(--ink-soft); color:var(--ink-soft); padding:5px 11px; border-radius:3px; font-size:12.5px; cursor:pointer; font-family:'Noto Serif Thai',sans-serif; white-space:nowrap; }
+.application-control-close:hover{ border-color:var(--red); color:var(--red); }
+@media (max-width:700px){ .form-control-grid{ grid-template-columns:1fr; } .application-control-head{ align-items:flex-start; } }
+</style>
+</head>
+<body>
+
+  <div class="gold-bar"></div>
+  <header class="hero">
+    <span class="tagline">Staff Only</span>
+    <h1>ตรวจสอบใบสมัคร <span>Whitelist</span></h1>
+  </header>
+
+  <main>
+    <div id="authWrap">
+      <div class="mo-frame">
+        <div class="mo-frame-inner auth-card" id="authCard">
+          <span class="mo-corner tl"></span><span class="mo-corner tr"></span>
+          <span class="mo-corner bl"></span><span class="mo-corner br"></span>
+          <a href="#" id="discordLoginBtn" class="discord-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.106c.36.698.772 1.362 1.225 1.994a.077.077 0 0 0 .084.028 19.83 19.83 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.662a.06.06 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.955 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            เข้าสู่ระบบด้วย Discord
+          </a>
+          <div class="denied" id="deniedMsg">บัญชี Discord นี้ไม่ได้อยู่ในรายชื่อทีมงาน กรุณาเข้าสู่ระบบด้วยบัญชีที่ได้รับอนุญาต</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="panelWrap" style="display:none;">
+      <div class="toolbar">
+        <div class="who" id="whoAmI"></div>
+        <span class="logout-link" id="logoutLink" style="color:#c7b990;font-size:12.5px;text-decoration:underline;cursor:pointer;">ออกจากระบบ</span>
+        <div class="filter-row" id="filterRow">
+          <button class="filter-btn" data-filter="all">ทั้งหมด*<span class="count-badge zero" id="count-all">0</span></button>
+          <button class="filter-btn active" data-filter="pending">รอตรวจสอบ<span class="count-badge zero" id="count-pending">0</span></button>
+          <button class="filter-btn" data-filter="approved">ผ่าน<span class="count-badge zero" id="count-approved">0</span></button>
+          <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอเซิฟเปิด<span class="count-badge zero" id="count-approved_waiting">0</span></button>
+          <button class="filter-btn" data-filter="rejected">ไม่ผ่าน<span class="count-badge zero" id="count-rejected">0</span></button>
+          <button class="filter-btn" data-filter="needs_revision">ต้องแก้ไข<span class="count-badge zero" id="count-needs_revision">0</span></button>
+        </div>
+        <div class="filter-row" id="typeFilterRow">
+          <button class="filter-btn active" data-type-filter="all">ทุกประเภท</button>
+          <button class="filter-btn" data-type-filter="regular">สมัครทั่วไป</button>
+          <button class="filter-btn" data-type-filter="streamer">📺 สตรีมเมอร์</button>
+        </div>
+        <button class="refresh-btn" id="refreshBtn">โหลดใหม่</button>
+        <button class="application-control-btn" id="applicationControlBtn" type="button">เปิด–ปิดรับไวริส</button>
+        <button class="answerkey-btn" id="answerKeyBtn">📖 เฉลยคำตอบ</button>
+        <button class="cleanup-btn" id="cleanupBtn">ลบใบสมัคร Rejected เกิน 90 วัน</button>
+      </div>
+      <div class="save-status" id="statusHint" style="margin-bottom:6px;">
+        เพื่อประหยัด Firestore reads หน้านี้จะโหลดเฉพาะใบ "รอตรวจสอบ" ให้อัตโนมัติ —
+        กดแท็บสถานะอื่นเพื่อโหลดเฉพาะสถานะนั้นตอนต้องการดู (*"ทั้งหมด" จะแสดงรวมเฉพาะสถานะที่เคยกดเปิดดูแล้วในเซสชันนี้ ไม่ได้โหลดข้อมูลใหม่)
+      </div>
+      <div class="save-status" id="cleanupStatus" style="margin-bottom:14px;"></div>
+
+      <div class="loading" id="loadingMsg">กำลังโหลดใบสมัคร...</div>
+      <div class="empty-msg" id="emptyMsg" style="display:none;">ยังไม่มีใบสมัครในระบบ</div>
+      <div class="app-list" id="appList"></div>
+    </div>
+
+    <!-- หน้าต่างควบคุมสถานะและข้อความของฟอร์มทั้งสองประเภท -->
+    <div id="applicationControlWrap" aria-hidden="true">
+      <div class="mo-frame form-control-panel">
+        <div class="mo-frame-inner">
+          <span class="mo-corner tl"></span><span class="mo-corner tr"></span>
+          <span class="mo-corner bl"></span><span class="mo-corner br"></span>
+          <div class="application-control-head">
+            <h2 class="form-control-title">เปิด–ปิดรับไวริส</h2>
+            <button type="button" class="application-control-close" id="applicationControlCloseBtn">ปิด ✕</button>
+          </div>
+          <p class="form-control-description">การตั้งค่าจะถูกบันทึกไว้ในระบบกลาง และมีผลกับหน้าฟอร์มทันทีเมื่อผู้สมัครเปิดหน้าใหม่หรือรีเฟรชหน้า</p>
+          <div class="form-control-grid">
+            <div class="form-control-card" data-control-card="regular">
+              <h3>Whitelist แบบทั่วไป</h3>
+              <div class="form-control-state-row">
+                <span class="form-control-state-label">สถานะปัจจุบัน</span>
+                <span class="form-control-state" id="applicationStateRegular">กำลังโหลด...</span>
+              </div>
+              <button type="button" class="form-control-toggle form-toggle-btn" data-form-type="regular">กำลังโหลด...</button>
+              <label for="applicationMessageRegular" style="margin-top:14px;">ข้อความเมื่อปิดรับสมัคร</label>
+              <textarea id="applicationMessageRegular" class="form-control-message" maxlength="500" placeholder="กรอกข้อความที่ต้องการให้ผู้สมัครเห็นเมื่อปิดรับสมัคร"></textarea>
+              <div class="form-control-foot">
+                <button type="button" class="form-control-save form-message-save-btn" data-form-type="regular">บันทึกข้อความ</button>
+                <span class="form-control-card-status" id="applicationControlStatusRegular"></span>
+              </div>
+            </div>
+
+            <div class="form-control-card" data-control-card="streamer">
+              <h3>Whitelist สตรีมเมอร์</h3>
+              <div class="form-control-state-row">
+                <span class="form-control-state-label">สถานะปัจจุบัน</span>
+                <span class="form-control-state" id="applicationStateStreamer">กำลังโหลด...</span>
+              </div>
+              <button type="button" class="form-control-toggle form-toggle-btn" data-form-type="streamer">กำลังโหลด...</button>
+              <label for="applicationMessageStreamer" style="margin-top:14px;">ข้อความเมื่อปิดรับสมัคร</label>
+              <textarea id="applicationMessageStreamer" class="form-control-message" maxlength="500" placeholder="กรอกข้อความที่ต้องการให้ผู้สมัครเห็นเมื่อปิดรับสมัคร"></textarea>
+              <div class="form-control-foot">
+                <button type="button" class="form-control-save form-message-save-btn" data-form-type="streamer">บันทึกข้อความ</button>
+                <span class="form-control-card-status" id="applicationControlStatusStreamer"></span>
+              </div>
+            </div>
+          </div>
+          <div class="form-control-status" id="applicationControlStatus" aria-live="polite" style="margin-top:14px;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="answerkey-overlay" id="answerKeyOverlay">
+    <div class="answerkey-modal">
+      <div class="answerkey-modal-inner">
+        <div class="answerkey-head">
+          <h2>เฉลยคำตอบ (สำหรับทีมงานใช้เทียบตอนตรวจ)</h2>
+          <button class="answerkey-close" id="answerKeyCloseBtn">ปิด ✕</button>
+        </div>
+        <p style="font-size:12.5px;color:var(--ink-soft);margin-top:-6px;">
+          กรอก/แก้ไขเฉลยของแต่ละข้อไว้ที่นี่ครั้งเดียว แล้วระบบจะแสดงเฉลยแทรกใต้คำตอบของผู้สมัครทุกใบโดยอัตโนมัติ
+          (บันทึกแยกกันสำหรับใบสมัครทั่วไปและใบสมัครสตรีมเมอร์ เพราะชุดคำถามไม่เหมือนกัน)
+        </p>
+        <div class="answerkey-tabs" id="answerKeyTabs">
+          <button class="answerkey-tab active" data-aktype="regular">สมัครทั่วไป</button>
+          <button class="answerkey-tab" data-aktype="streamer">📺 สตรีมเมอร์</button>
+        </div>
+        <div id="answerKeyFields"></div>
+        <div class="answerkey-foot">
+          <button class="save-btn" id="answerKeySaveBtn">บันทึกเฉลย</button>
+          <span class="answerkey-status" id="answerKeyStatus"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="firebase-config.js"></script>
+<script src="firebase-storage.js"></script>
+<script>
+(function(){
+  // ============ CONFIG ============
+  // TODO: ใส่ Client ID เดียวกับหน้าอื่น
+  const DISCORD_CLIENT_ID = '1534483543462248480';
+  const REDIRECT_URI = window.location.origin + window.location.pathname;
+  const OAUTH_SCOPE = 'identify';
+
+  // TODO: ใส่ Discord User ID ของทีมงานที่อนุญาตให้เข้าหน้านี้ (คลิกขวาชื่อตัวเองใน Discord -> Copy User ID)
+  // หมายเหตุด้านความปลอดภัย: รายชื่อนี้อยู่ในโค้ดฝั่งเบราว์เซอร์ ใครก็ตามที่เปิดดูซอร์สโค้ดจะเห็นรายชื่อ ID ได้
+  // (แต่ยังต้องมี access token ของบัญชีนั้นจริงๆ ถึงจะผ่านการตรวจสอบตอน login ได้)
+  const STAFF_DISCORD_IDS = [
+    '428540830056448001',
+    '299543390046126081',
+    '415630632300052492',
+    '1332381770443788318',
+    '431804266932600832',
+    '959086066860711936',
+    '274764720685187073',
+    '795636332239257642',  
+    '494526607336407040',
+    '3379379614738022403',
+    '398714895996026892',
+    '244496915977207818',
+    '337937961473802240'
+  ];
+  // ==================================
+
+  function buildLoginUrl(){
+    const params = new URLSearchParams({
+      client_id: DISCORD_CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      response_type: 'token',
+      scope: OAUTH_SCOPE
+    });
+    return 'https://discord.com/oauth2/authorize?' + params.toString();
+  }
+  document.getElementById('discordLoginBtn').href = buildLoginUrl();
+
+  // ============ SESSION PERSISTENCE ============
+  // เก็บ access token ไว้ใน localStorage เพื่อไม่ต้องให้ทีมงานล็อกอินใหม่ทุกครั้งที่รีเฟรชหน้า
+  const SESSION_KEY = 'mo_discord_session';
+
+  function saveSession(token, expiresIn){
+    try{
+      const expiresAt = Date.now() + (Number(expiresIn) || 604800) * 1000;
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ token, expiresAt }));
+    }catch(e){ /* localStorage ไม่พร้อมใช้งาน (โหมดส่วนตัว ฯลฯ) ข้ามไปเฉยๆ */ }
+  }
+
+  function loadSession(){
+    try{
+      const raw = localStorage.getItem(SESSION_KEY);
+      if(!raw) return null;
+      const data = JSON.parse(raw);
+      if(!data.token || !data.expiresAt || Date.now() >= data.expiresAt){
+        localStorage.removeItem(SESSION_KEY);
+        return null;
+      }
+      return data.token;
+    }catch(e){ return null; }
+  }
+
+  function clearSession(){
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){ /* ignore */ }
+  }
+  // ================================================
+
+  function parseAccessToken(){
+    if(!window.location.hash) return null;
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const token = hash.get('access_token');
+    if(!token) return null;
+    return { token, expiresIn: hash.get('expires_in') };
+  }
+
+  const STATUS_LABELS = {
+  pending: { label: 'รอตรวจสอบ', color: '#fff0be', bg: '#76520f' },
+  approved: { label: 'ผ่านการพิจารณา', color: '#e5ffea', bg: '#1f6b3a' },
+  approved_waiting: { label: 'ผ่านแล้วรอเซิฟเปิด', color: '#123d1a', bg: '#b7f2b0' },
+  rejected: { label: 'ไม่ผ่านการพิจารณา', color: '#ffe8e8', bg: '#8b2020' },
+  needs_revision: { label: 'ต้องแก้ไขก่อน', color: '#ffffff', bg: '#0f3a5c' }
+  };
+
+  const questionLabels = {
+    q4: 'ชื่อ-นามสกุล (IC) และอายุ (IC)',
+    q4Name: 'ชื่อ-นามสกุล (IC)',
+    q4Age: 'อายุ (IC)',
+    q5: 'ข้อ5.บทบาทตัวละครกับเนื้อเรื่อง / ลักษณะตัวละคร',
+    q6: 'ข้อ6.ประสบการณ์การเล่น Roleplay ที่ผ่านมา',
+    q7: 'ข้อ7.การละเมิดกฎ Common Courtesy',
+    q8: 'ข้อ8.กฎ Character Customization Rules',
+    q9: 'ข้อ9.RDM คืออะไร',
+    q10: 'ข้อ10.ความแตกต่างระหว่าง breaking character กับ /ooc',
+    q11: 'ข้อ11.อธิบายคำว่า Metagaming',
+    q12: 'ข้อ12.จำนวนผู้เข้าร่วมปะทะฉับพลันที่อนุญาต',
+    q13: 'ข้อ13.กฎ Immersive Movement',
+    q14: 'ข้อ14.กรณีขโมยของและสังหารกษัตริย์ - กฎที่ละเมิดและควรทำอย่างไรให้ดีขึ้น',
+    q15: 'ข้อ15.สถานการณ์อัศวินเจรจากับโจรที่ลักพาตัวชายชรา',
+    q16: 'ข้อ16.กรณีรับงานซ่อมแซมแต่ไม่พบฉากในเกม'
+  };
+
+  // คำถามของใบสมัคร Streamer แยกจาก Whitelist ปกติ
+  const streamerQuestionLabels = {
+    q4: 'ชื่อ-นามสกุล (IC) และอายุ (IC)',
+    q4Name: 'ชื่อ-นามสกุล (IC)',
+    q4Age: 'อายุ (IC)',
+    q5: 'ข้อ5.บทบาทตัวละครกับเนื้อเรื่อง / ลักษณะตัวละคร',
+    q6: 'ข้อ6.ประสบการณ์การเล่น Roleplay / ผลงานที่ผ่านมา',
+    q7: 'ข้อ7.RDM คืออะไร',
+    q8: 'ข้อ8.ความแตกต่างระหว่าง breaking character กับ /ooc',
+    q9: 'ข้อ9.จำนวนผู้เข้าร่วมปะทะฉับพลันที่อนุญาต',
+    q10: 'ข้อ10.โหน้อง ขับรถชนพี่ ไม่ลงมาขอโทษ ไม่ลงมาดูเลย แล้วขับหนีมาตั้งไกล โอ้โหอะไรวะคนไทย?'
+  };
+
+  // เฉลยคำตอบเริ่มต้น — ใส่ไว้เฉพาะนิยามมาตรฐานที่ใช้กันทั่วไปในวงการ Roleplay
+  // (RDM / Metagaming / breaking character vs OOC) ส่วนข้อที่เป็นกฎเฉพาะของ
+  // เซิร์ฟเวอร์นี้เอง (จำนวนคนปะทะ, Immersive Movement, Character Customization,
+  // สถานการณ์สมมติต่างๆ) เว้นว่างไว้ให้ทีมงานกรอกเองผ่านปุ่ม "เฉลยคำตอบ"
+  // เพราะเป็นกฎที่ทีมงานตั้งเอง ระบบเดาไม่ได้ ค่าที่กรอกจะถูกบันทึกและใช้ร่วมกันทุกคน
+  const DEFAULT_ANSWER_HINTS = {
+    regular: {
+      q5: 'ตัวละครที่เหมาะสมควรเป็นคนธรรมดา เช่น:ช่างฝีมือ พ่อค้าชาวนา,นักเดินทาง,อาชญากร,หมอ/ผู้รักษา และต้องมีเหตุผลที่สมจริงว่าทำไมถึงมาอยู่ใน Frostmarch หรือ Rivenvale สิ่งที่ห้าม เป็น Royal,เป็น Noble ตั้งแต่เริ่ม,มีอำนาจทางการเมืองสูง,เป็น Maester,มีพลังเวทมนตร์จริง,มีพลังเหนือธรรมชาติแต่กำเนิด,อ้างว่ามาจากทวีปไกล ๆ แบบไม่มีเหตุผลรองรับ,ใช้ชื่อบุคคลจริง,ใช้ชื่อจากตัวละคร RDR,ใช้ชื่อ Meme / Jokeโดยเฉพาะ Maester — เป็นตัวละครที่ Staff เล่น ผู้เล่นไม่สามารถสร้างตัวละครที่เป็น Maester หรือมีความเกี่ยวข้องทางประวัติศาสตร์กับ Maesters Guild ได้',
+      q7: 'การกระทำที่ถือเป็นการละเมิดกฎ Common Courtesy (มารยาททางสังคมพื้นฐาน) ในการเล่น Roleplay ได้แก่ การไม่ให้เกียรติผู้เล่นอื่น, การขัดขวางการสวมบทบาท, การใช้วาจาหรือพฤติกรรมดูถูกเหยียดหยาม, และการทำลายบรรยากาศความสนุกของผู้อื่นในเซิร์ฟเวอร์ ไม่ให้เกียรติและคุกคาม: ใช้คำพูดดูถูก เหยียดหยาม ข่มขู่ หรือคุกคามผู้เล่นอื่นทั้งในและนอกบทบาท,ขัดขวางการเล่น (Breaking RP): จงใจทำลายสถานการณ์หรือขัดจังหวะการสวมบทบาทของผู้อื่น ทำให้คนอื่นเล่นต่อไม่ได้,นอกเรื่องหรือป่วนเมือง: พูดจาออกนอกเรื่องบทบาท (OOC - Out of Character) ในสถานการณ์สำคัญ หรือก่อกวนให้คนอื่นเสียอารมณ์,ไม่ยอมรับความพ่ายแพ้: โวยวาย ไม่ยอมเล่นไปตามบทบาทเมื่อฝ่ายตนเองเสียเปรียบหรือแพ้ในสถานการณ์นั้น',
+      q8: 'คือการสร้างหรือแต่งกายตัวละครให้ออกมาขัดกับธีมของเซิร์ฟเวอร์ ขัดหลักความสมจริง หรือใช้ประโยชน์จากระบบแต่งตัวเพื่อความได้เปรียบแบบผิดบทบาท ตั้งชื่อไม่สมบทบาท (Non-RP Name),แต่งกายหลุดธีมหรือแฟนตาซีเกินจริง,ใช้โมเดลหรือขนาดตัวละครผิดปกติ,แต่งตัวเลียนแบบเจ้าหน้าที่หรือแฟชันต้องห้าม,',
+      q9: 'RDM (Random Death Match) คือการโจมตี/สังหารผู้เล่นอื่นโดยไม่มีเหตุผลหรือการปูเรื่อง IC ที่สมเหตุสมผลมาก่อน',
+      q10: 'Breaking character คือการหลุดออกจากบทบาทตัวละครกลางเกมโดยไม่ใช้ช่องทาง OOC ที่กำหนด ส่วน /ooc คือคำสั่งที่ใช้สื่อสารนอกบทบาทอย่างถูกต้อง ควรใช้เท่าที่จำเป็นและไม่กระทบอรรถรสของคนรอบข้าง',
+      q11: 'Metagaming คือการนำข้อมูลที่ตัวละครไม่ควรรู้ (มาจากนอกเกม เช่น Discord, สตรีม, หรือมุมมองผู้เล่นอื่น) มาใช้ตัดสินใจหรือกระทำการในบทบาท IC',
+      q12: 'ไม่กิน 5 คนต่อฝ่าย',
+      q13: 'การละเมิดกฎเกี่ยวกับการเคลื่อนไหวในเกมสวมบทบาท คือการควบคุมตัวละครเคลื่อนไหวสวนทางกับหลักความจริง สมจริง หรือทำลายบรรยากาศของสถานการณ์ ผู้เล่นต้องแสดงพฤติกรรมและการเคลื่อนไหวของตัวละครให้สอดคล้องกับการใช้ชีวิตจริงในยุคกลาง โดยไม่ควรวิ่งหรือเคลื่อนที่ด้วยความเร็วสูงตลอดเวลาโดยไม่มีเหตุผลรองรับในชีวิตจริงของยุคกลาง การเดินถือเป็นการเคลื่อนที่ตามปกติสำหรับการเดินทางและการทำกิจวัตรทั่วไป ส่วนการวิ่งควรเกิดขึ้นเมื่อมีเหตุผลที่เหมาะสม เช่น การหลบหนีจากอันตราย การไล่ล่า การเดินทางอย่างเร่งด่วน การช่วยเหลือผู้อื่น หรือสถานการณ์ที่จำเป็นต้องเคลื่อนที่อย่างรวดเร็ว',
+      q14: 'การฆ่า King ถือเป็น อาชญากรรมขนาดใหญ่ในเนื้อเรื่อง ซึ่งต้องขออนุมัติ Staff ผ่าน Ticket ก่อนไม่สามารถอยู่ดี ๆ แล้วตัดสินใจฆ่า King กลางฉากได้ , Powergaming / 2.FailRPไม่มีการวางแผน ไม่มีการปูเรื่อง และไม่มี RP ที่นำไปสู่การลอบสังหารการบังคับให้เกิดเหตุการณ์ใหญ่แบบทันทีทำให้ King และผู้เล่นอื่นไม่มีโอกาสมีส่วนร่วมกับเหตุการณ์อย่างเหมาะสม,3. Pacing การปลอมเป็น Guard แล้วเข้าไปพูดคุยเรื่องงาน Guard กับ King ก่อนฆ่า เป็นการหลอกลวงที่มีผลกระทบใหญ่การหลอกลวงสามารถทำได้ใน RP แต่ควรมีการปูเรื่องและพัฒนาเหตุการณ์ก่อน ไม่ใช่ตัดสินใจฆ่าทันที,4. NVLผู้เล่นไม่ได้แสดงให้เห็นว่าเข้าใจผลลัพธ์ของสิ่งที่กำลังทำ King เป็นบุคคลสำคัญของอาณาจักร ดังนั้นควรสมมติว่า King มีการป้องกันและมี Guard คุ้มกันอยู่เสมอ',
+      q15: 'ไม่มีคำตอบเดียวที่ถูกต้องสิ่งที่ทีมงานต้องการดูคือ คุณ:อ่านสถานการณ์ก่อนคิดจากมุมมองของตัวละครคำนึงถึงความสามารถของตัวละครไม่ทำอะไรที่ทำให้ฉากพังเข้าใจกฎก่อนเข้าไปยุ่งจุดสำคัญมากตอนนี้มี Knight อยู่แล้ว 5 คนซึ่งหมายความว่า ฝั่ง Hostile เต็มจำนวนแล้วถ้าคุณเข้าไปช่วย Knight ต่อสู้ = กลายเป็น คนที่ 6→ ผิดกฎ Group Limitดังนั้นตัวละครที่ดีอาจ:อยู่ห่าง ๆ และสังเกตรอดูการเจรจาหาทางช่วยชายชราโดยไม่เข้าร่วมการต่อสู้ผ่านทางไปหรือทสิ่งอื่นตามอาชีพและบุคลิกของตัวละคร',
+      q16: 'ให้ Roleplay เองใช้:/me EmoteSelf-directed RPสร้างฉากการซ่อมขึ้นมาด้วยตัวเอง',  
+    },
+    streamer: {
+      q5: 'ตัวละครที่เหมาะสมควรเป็นคนธรรมดา เช่น:ช่างฝีมือ พ่อค้าชาวนา,นักเดินทาง,อาชญากร,หมอ/ผู้รักษา และต้องมีเหตุผลที่สมจริงว่าทำไมถึงมาอยู่ใน Frostmarch หรือ Rivenvale สิ่งที่ห้าม เป็น Royal,เป็น Noble ตั้งแต่เริ่ม,มีอำนาจทางการเมืองสูง,เป็น Maester,มีพลังเวทมนตร์จริง,มีพลังเหนือธรรมชาติแต่กำเนิด,อ้างว่ามาจากทวีปไกล ๆ แบบไม่มีเหตุผลรองรับ,ใช้ชื่อบุคคลจริง,ใช้ชื่อจากตัวละคร RDR,ใช้ชื่อ Meme / Jokeโดยเฉพาะ Maester — เป็นตัวละครที่ Staff เล่น ผู้เล่นไม่สามารถสร้างตัวละครที่เป็น Maester หรือมีความเกี่ยวข้องทางประวัติศาสตร์กับ Maesters Guild ได้',
+      q9: 'ไม่กิน 5 คนต่อฝ่าย',
+      q7: 'RDM (Random Death Match) คือการโจมตี/สังหารผู้เล่นอื่นโดยไม่มีเหตุผลหรือการปูเรื่อง IC ที่สมเหตุสมผลมาก่อน',
+      q8: 'Breaking character คือการหลุดออกจากบทบาทตัวละครกลางเกมโดยไม่ใช้ช่องทาง OOC ที่กำหนด ส่วน /ooc คือคำสั่งที่ใช้สื่อสารนอกบทบาทอย่างถูกต้อง ควรใช้เท่าที่จำเป็นและไม่กระทบอรรถรสของคนรอบข้าง'
+    }
+  };
+  let answerKeys = { regular: {}, streamer: {} };
+
+  async function loadAnswerKeys(){
+    for(const type of ['regular','streamer']){
+      try{
+        const r = await window.storage.get('answerkey:' + type, true);
+        answerKeys[type] = r ? JSON.parse(r.value) : {};
+      }catch(e){ answerKeys[type] = {}; }
+    }
+  }
+
+  let staffUser = null;
+  let allRecords = [];
+  let currentFilter = 'pending'; // ค่าเริ่มต้น: โชว์แค่ "รอตรวจสอบ" เพื่อลด Firestore reads
+  let currentTypeFilter = 'all';
+  let openKeys = new Set(); // เก็บ key ของใบสมัครที่เปิดดูอยู่ ไม่ให้ auto-refresh ไปหุบทิ้ง
+  let loadedStatuses = new Set(); // สถานะที่เคย fetch มาแล้วในเซสชันนี้ (กันโหลดซ้ำ)
+  let statusInFlight = null; // กันกดรัวๆ แล้ว fetch สถานะเดียวกันซ้อนกันหลายรอบ
+  let statusCounts = { pending:0, approved:0, approved_waiting:0, rejected:0, needs_revision:0 };
+
+  const APPLICATION_SETTINGS_KEY = 'application:settings';
+  const DEFAULT_APPLICATION_SETTINGS = {
+    regular: {
+      open: true,
+      message: 'ขณะนี้ปิดรับสมัคร Whitelist ทั่วไป กรุณาติดตามประกาศจากทีมงานเพื่อทราบกำหนดการเปิดรับสมัครอีกครั้ง'
+    },
+    streamer: {
+      open: true,
+      message: 'ขณะนี้ปิดรับสมัคร Whitelist สตรีมเมอร์ กรุณาติดตามประกาศจากทีมงานเพื่อทราบกำหนดการเปิดรับสมัครอีกครั้ง'
+    }
+  };
+  let applicationSettings = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+
+  function normalizeApplicationSettings(raw){
+    const next = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+    if(!raw || typeof raw !== 'object') return next;
+    ['regular','streamer'].forEach(type=>{
+      const source = raw[type];
+      if(!source || typeof source !== 'object') return;
+      next[type].open = source.open !== false;
+      if(typeof source.message === 'string' && source.message.trim()){
+        next[type].message = source.message.trim();
+      }
+    });
+    return next;
+  }
+
+  const authWrap = document.getElementById('authWrap');
+  const panelWrap = document.getElementById('panelWrap');
+  const deniedMsg = document.getElementById('deniedMsg');
+  const appList = document.getElementById('appList');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const emptyMsg = document.getElementById('emptyMsg');
+  const applicationControlWrap = document.getElementById('applicationControlWrap');
+  const applicationControlBtn = document.getElementById('applicationControlBtn');
+  const applicationControlCloseBtn = document.getElementById('applicationControlCloseBtn');
+  const applicationControlStatus = document.getElementById('applicationControlStatus');
+
+  function renderApplicationSettings(){
+    ['regular','streamer'].forEach(type=>{
+      const settings = applicationSettings[type];
+      const suffix = type === 'regular' ? 'Regular' : 'Streamer';
+      const stateEl = document.getElementById('applicationState' + suffix);
+      const toggleBtn = document.querySelector('.form-toggle-btn[data-form-type="' + type + '"]');
+      const messageEl = document.getElementById('applicationMessage' + suffix);
+      if(!stateEl || !toggleBtn || !messageEl) return;
+
+      stateEl.textContent = settings.open ? 'เปิดรับสมัคร' : 'ปิดรับสมัคร';
+      stateEl.className = 'form-control-state ' + (settings.open ? 'open' : 'closed');
+      toggleBtn.textContent = settings.open ? 'ปิดรับสมัคร' : 'เปิดรับสมัคร';
+      toggleBtn.classList.toggle('open-action', !settings.open);
+      messageEl.value = settings.message;
+    });
+  }
+
+  async function persistApplicationSettings(){
+    const payload = Object.assign({}, applicationSettings, {
+      updatedAt: new Date().toISOString(),
+      updatedBy: staffUser ? staffUser.username : null
+    });
+    const ok = await window.storage.set(APPLICATION_SETTINGS_KEY, JSON.stringify(payload), true);
+    if(!ok) throw new Error('application settings save failed');
+  }
+
+  async function loadApplicationSettings(){
+    try{
+      const result = await window.storage.get(APPLICATION_SETTINGS_KEY, true);
+      applicationSettings = result ? normalizeApplicationSettings(JSON.parse(result.value)) : JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+      renderApplicationSettings();
+      applicationControlStatus.textContent = result ? 'โหลดการตั้งค่าล่าสุดแล้ว' : 'ยังไม่มีการตั้งค่า ระบบใช้ค่าเริ่มต้นเป็นเปิดรับสมัคร';
+    }catch(e){
+      applicationSettings = JSON.parse(JSON.stringify(DEFAULT_APPLICATION_SETTINGS));
+      renderApplicationSettings();
+      applicationControlStatus.textContent = storageErrorMessage(e);
+    }
+  }
+
+  async function toggleApplicationType(type, button){
+    const previous = applicationSettings[type].open;
+    const statusEl = document.getElementById('applicationControlStatus' + (type === 'regular' ? 'Regular' : 'Streamer'));
+    button.disabled = true;
+    statusEl.textContent = 'กำลังบันทึก...';
+    applicationSettings[type].open = !previous;
+    try{
+      await persistApplicationSettings();
+      renderApplicationSettings();
+      statusEl.textContent = applicationSettings[type].open ? 'เปิดรับสมัครแล้ว ✓' : 'ปิดรับสมัครแล้ว ✓';
+      applicationControlStatus.textContent = 'บันทึกสถานะล่าสุดเมื่อ ' + new Date().toLocaleString('th-TH');
+    }catch(e){
+      applicationSettings[type].open = previous;
+      renderApplicationSettings();
+      statusEl.textContent = storageErrorMessage(e);
+      applicationControlStatus.textContent = 'ไม่สามารถบันทึกสถานะได้';
+    }
+    button.disabled = false;
+  }
+
+  async function saveApplicationMessage(type, button){
+    const suffix = type === 'regular' ? 'Regular' : 'Streamer';
+    const messageEl = document.getElementById('applicationMessage' + suffix);
+    const statusEl = document.getElementById('applicationControlStatus' + suffix);
+    const message = messageEl.value.trim();
+    if(!message){
+      statusEl.textContent = 'กรุณากรอกข้อความก่อนบันทึก';
+      messageEl.focus();
+      return;
+    }
+
+    const previous = applicationSettings[type].message;
+    button.disabled = true;
+    statusEl.textContent = 'กำลังบันทึก...';
+    applicationSettings[type].message = message;
+    try{
+      await persistApplicationSettings();
+      renderApplicationSettings();
+      statusEl.textContent = 'บันทึกข้อความแล้ว ✓';
+      applicationControlStatus.textContent = 'บันทึกข้อความล่าสุดเมื่อ ' + new Date().toLocaleString('th-TH');
+    }catch(e){
+      applicationSettings[type].message = previous;
+      renderApplicationSettings();
+      statusEl.textContent = storageErrorMessage(e);
+      applicationControlStatus.textContent = 'ไม่สามารถบันทึกข้อความได้';
+    }
+    button.disabled = false;
+  }
+
+  function openApplicationControl(){
+    renderApplicationSettings();
+    applicationControlWrap.classList.add('open');
+    applicationControlWrap.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeApplicationControl(){
+    applicationControlWrap.classList.remove('open');
+    applicationControlWrap.setAttribute('aria-hidden', 'true');
+  }
+
+  applicationControlBtn.addEventListener('click', openApplicationControl);
+  applicationControlCloseBtn.addEventListener('click', closeApplicationControl);
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && applicationControlWrap.classList.contains('open')){
+      closeApplicationControl();
+    }
+  });
+  applicationControlWrap.addEventListener('click', (e)=>{
+    if(e.target === applicationControlWrap){
+      closeApplicationControl();
+      return;
+    }
+
+    const toggleBtn = e.target.closest('.form-toggle-btn');
+    if(toggleBtn){
+      toggleApplicationType(toggleBtn.dataset.formType, toggleBtn);
+      return;
+    }
+    const saveBtn = e.target.closest('.form-message-save-btn');
+    if(saveBtn) saveApplicationMessage(saveBtn.dataset.formType, saveBtn);
+  });
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+
+  function storageErrorMessage(err){
+    console.error('Storage operation failed:', err);
+    const code = err && err.code ? String(err.code) : '';
+    if(code.includes('permission-denied') || code.includes('PERMISSION_DENIED')){
+      return 'ไม่มีสิทธิ์บันทึกข้อมูล กรุณา Publish ไฟล์ firestore.rules ใน Firebase Console ก่อน แล้วลองใหม่';
+    }
+    return 'บันทึกไม่สำเร็จ กรุณาตรวจสอบ Firebase config/Rules แล้วลองใหม่';
+  }
+
+  // ประวัติความเห็นของทีมงานทุกรอบ — แสดงไม่ว่ารอบนั้นจะให้สถานะอะไรก็ตาม
+  // (ผ่าน / ผ่านรอเซิฟเปิด / ไม่ผ่าน / ต้องแก้ไข ฯลฯ) กันความเห็นรอบก่อนๆ หายไป
+  // เวลาทีมงานตรวจซ้ำแล้วเขียนทับ adminComment เดิม
+  function buildHistoryHtml(list){
+    if(!Array.isArray(list) || list.length === 0) return '';
+    const rows = list.slice().reverse().map(h=>{
+      const st = STATUS_LABELS[h.status];
+      const statusLabel = st ? st.label : (h.status || '-');
+      const when = h.reviewedAt ? new Date(h.reviewedAt).toLocaleString('th-TH') : '';
+      return '<div class="field" style="border-bottom:1px dashed var(--gold-dim);">' +
+        '<div class="label">' + escapeHtml(statusLabel) +
+          (h.reviewedBy ? ' — ตรวจโดย ' + escapeHtml(h.reviewedBy) : '') +
+          (when ? ' · ' + when : '') +
+        '</div>' +
+        '<div class="value">' + escapeHtml(h.comment || '(ไม่มีความเห็น)') + '</div>' +
+      '</div>';
+    }).join('');
+    return '<div class="field"><div class="label">📜 ความเห็นของทีมงานก่อนหน้านี้ทั้งหมด (' + list.length + ' รายการ)</div></div>' + rows;
+  }
+
+  // คืนชื่อผู้ให้ความเห็นครั้งล่าสุดจากประวัติเดิมของใบสมัคร
+  // ใช้กับรายการ "รอตรวจสอบ" ที่ผู้สมัครเคยได้รับความเห็นมาก่อนแล้ว
+  function getLatestPreviousReviewer(record, historyList){
+    const previousReviewer = String(record.previousReviewedBy || '').trim();
+    if(record.previousComment && previousReviewer) return previousReviewer;
+
+    for(let i = historyList.length - 1; i >= 0; i--){
+      const reviewer = String((historyList[i] && historyList[i].reviewedBy) || '').trim();
+      if(reviewer && reviewer !== '-') return reviewer;
+    }
+
+    return String(record.reviewedBy || '').trim();
+  }
+
+  // ดึงเฉพาะใบสมัครของ "สถานะเดียว" ผ่าน listByStatus() — Firestore query ที่กรอง
+  // status ให้ตั้งแต่ฝั่งเซิร์ฟเวอร์ อ่านเฉพาะเอกสารที่ status ตรงเงื่อนไขเท่านั้น
+
+  // แล้ว merge เข้า allRecords (แทนที่ของเดิมด้วยสถานะเดียวกัน กันข้อมูลซ้ำ/ค้าง)
+  async function fetchStatus(status, {silent=false}={}){
+    if(statusInFlight === status) return; // กันกดซ้อน
+    statusInFlight = status;
+    if(!silent){ loadingMsg.style.display = 'block'; }
+    try{
+      const res = await window.storage.listByStatus(status);
+      const fresh = (res && res.records || []).map(r => ({ key: r.key, record: JSON.parse(r.value) }));
+      const freshKeys = new Set(fresh.map(x=>x.key));
+      // เอา record เก่าของ "สถานะนี้" ที่ตอนนี้ไม่ตรงแล้วออก (เช่นเคยเป็น pending
+      // แต่ตอนนี้ถูกเปลี่ยนสถานะไปแล้วจากที่อื่น) ส่วน record ของสถานะอื่นที่โหลด
+      // ไว้อยู่แล้วไม่แตะต้อง
+      allRecords = allRecords.filter(x => !(x.record.status === status && !freshKeys.has(x.key)));
+      const existingKeys = new Set(allRecords.map(x=>x.key));
+      fresh.forEach(item=>{
+        if(existingKeys.has(item.key)){
+          allRecords = allRecords.map(x => x.key === item.key ? item : x);
+        }else{
+          allRecords.push(item);
+        }
+      });
+      allRecords.sort((a,b)=> new Date(b.record.submittedAt) - new Date(a.record.submittedAt));
+      loadedStatuses.add(status);
+      renderList();
+    }catch(e){
+      appList.innerHTML = '<div class="empty-msg">โหลดข้อมูลไม่สำเร็จ กรุณากด "โหลดใหม่"</div>';
+    }
+    if(!silent){ loadingMsg.style.display = 'none'; }
+    statusInFlight = null;
+  }
+
+  // ปุ่ม "โหลดใหม่": รีเฟรชเฉพาะสถานะที่กำลังดูอยู่ (หรือทุกสถานะที่เคยเปิดไว้แล้ว
+  // ถ้าอยู่ในแท็บ "ทั้งหมด") — ไม่ดึงทั้ง collection เหมือนของเดิม
+
+  // อัปเดตตัวเลขบนแท็บให้ตรงกับ statusCounts ปัจจุบัน (ไม่ยิง network เอง)
+  function renderCounts(){
+    Object.keys(STATUS_LABELS).forEach(s=>{
+      const el = document.getElementById('count-' + s);
+      if(!el) return;
+      const n = statusCounts[s] || 0;
+      el.textContent = n;
+      el.classList.toggle('zero', n === 0);
+    });
+    const total = Object.values(statusCounts).reduce((a,b)=>a+(b||0), 0);
+    const allEl = document.getElementById('count-all');
+    if(allEl){ allEl.textContent = total; allEl.classList.toggle('zero', total === 0); }
+  }
+
+  // ดึงจำนวนของทุกสถานะด้วย aggregation query (countByStatus) — คนละกลไกกับ
+  // การโหลดตัวเอกสาร ต้นทุนถูกกว่ามาก (~1 read ต่อสถานะ ไม่ว่าจะมีกี่ใบ)
+  // เลยยิงพร้อมกันได้ทั้ง 5 สถานะโดยไม่กระทบเป้าหมายลด reads
+  async function refreshCounts(){
+    try{
+      const statuses = Object.keys(STATUS_LABELS);
+      const vals = await Promise.all(statuses.map(s => window.storage.countByStatus(s).catch(()=>null)));
+      statuses.forEach((s,i)=>{ if(vals[i] != null) statusCounts[s] = vals[i]; });
+      renderCounts();
+    }catch(e){ /* ตัวเลขไม่อัปเดตก็ไม่เป็นไร ไม่กระทบการทำงานหลัก */ }
+  }
+
+  async function loadApplications(){
+    if(currentFilter === 'all'){
+      const statuses = loadedStatuses.size ? Array.from(loadedStatuses) : ['pending'];
+      loadingMsg.style.display = 'block';
+      for(const s of statuses){ await fetchStatus(s, {silent:true}); }
+      loadingMsg.style.display = 'none';
+      renderList();
+    }else{
+      await fetchStatus(currentFilter);
+    }
+  }
+
+  function renderList(){
+    let filtered = currentFilter === 'all'
+      ? allRecords
+      : allRecords.filter(x => (x.record.status || 'pending') === currentFilter);
+
+    if(currentTypeFilter !== 'all'){
+      filtered = filtered.filter(x => (x.record.type === 'streamer' ? 'streamer' : 'regular') === currentTypeFilter);
+    }
+
+    appList.innerHTML = '';
+    if(filtered.length === 0){
+      emptyMsg.style.display = 'block';
+      return;
+    }
+    emptyMsg.style.display = 'none';
+
+    filtered.forEach(({key, record})=>{
+      const st = STATUS_LABELS[record.status] || STATUS_LABELS.pending;
+      const isStreamer = record.type === 'streamer';
+      const card = document.createElement('div');
+      card.className = 'app-card';
+
+      // แยกคำตอบตามประเภทใบสมัคร: Whitelist และ Streamer จะใช้ชุดคำถามของตัวเอง
+      const labels = isStreamer ? streamerQuestionLabels : questionLabels;
+      const akType = isStreamer ? 'streamer' : 'regular';
+      const answersHtml =
+        Object.keys(labels).map(id=>{
+          if(record.answers && record.answers[id] !== undefined){
+            const hint = (answerKeys[akType] && answerKeys[akType][id]) || DEFAULT_ANSWER_HINTS[akType][id] || '';
+            const hintHtml = hint
+              ? '<div class="hint-box"><div class="hint-label">เฉลย</div><div class="hint-text">' + escapeHtml(hint) + '</div></div>'
+              : '<div class="hint-box empty"><div class="hint-label">เฉลย</div><div class="hint-text">ยังไม่ได้กรอกเฉลยข้อนี้ — กดปุ่ม "เฉลยคำตอบ" ด้านบนเพื่อกรอก</div></div>';
+            return '<div class="field"><div class="label">' + escapeHtml(labels[id]) + '</div>' +
+                   '<div class="value">' + escapeHtml(record.answers[id] || '-') + '</div>' + hintHtml + '</div>';
+          }
+          return '';
+        }).join('') +
+        (isStreamer && record.platform ? '<div class="field"><div class="label">แพลตฟอร์ม</div><div class="value">' + escapeHtml(record.platform) + '</div></div>' : '') +
+        (isStreamer && record.audienceSize ? '<div class="field"><div class="label">ผู้ติดตาม / ผู้ชมเฉลี่ย</div><div class="value">' + escapeHtml(record.audienceSize) + '</div></div>' : '') +
+        (isStreamer && record.extraInfo ? '<div class="field"><div class="label">ข้อมูลเพิ่มเติม</div><div class="value">' + escapeHtml(record.extraInfo) + '</div></div>' : '');
+
+      // แจ้งเตือนแบบเห็นชัดๆ ว่าใบนี้เป็นการ "แก้ไขแล้วส่งใหม่" จากผู้สมัคร
+      const isResubmission = !!record.resubmittedAt;
+      const resubmitBadge = isResubmission
+        ? '<span class="status-pill badge-pill badge-resubmit" style="margin-right:8px;">🔁 แก้ไขและส่งใหม่</span>'
+        : '';
+      const streamerBadge = isStreamer
+        ? '<span class="status-pill badge-pill badge-streamer" style="margin-right:8px;">📺 สตรีมเมอร์</span>'
+        : '';
+      const historyList = Array.isArray(record.reviewHistory) ? record.reviewHistory : [];
+      const totalPastComments = historyList.length + (record.previousComment ? 1 : 0);
+      const prevCommentBadge = totalPastComments > 0
+        ? '<span class="status-pill badge-pill badge-prevcomment prev-comment-badge" style="margin-right:8px;" title="กางการ์ดเพื่อดูความเห็นก่อนหน้าทั้งหมด">📝 มีความเห็นเดิม (' + totalPastComments + ')</span>'
+        : '';
+      const previousCommentHtml = record.previousComment
+        ? '<div class="field previous-comment-field"><div class="label">ความเห็นเดิม (ก่อนแก้ไขรอบนี้)' +
+          (record.previousReviewedBy ? ' — ตรวจโดย ' + escapeHtml(record.previousReviewedBy) : '') +
+          '</div><div class="value">' + escapeHtml(record.previousComment) + '</div></div>'
+        : '';
+      const reviewHistoryHtml = buildHistoryHtml(historyList);
+      const latestPreviousReviewer = getLatestPreviousReviewer(record, historyList);
+      const hasPreviousComments = totalPastComments > 0;
+      const isPending = (record.status || 'pending') === 'pending';
+      const previousReviewerMetaHtml = isPending && hasPreviousComments && latestPreviousReviewer
+        ? '<div class="meta reviewer-meta">ผู้ให้ความเห็นล่าสุด: ' + escapeHtml(latestPreviousReviewer) + '</div>'
+        : '';
+      const reviewerInfoHtml = record.reviewedBy
+        ? '<div class="field reviewer-field"><div class="label">ตรวจสอบล่าสุดโดย</div><div class="value">' +
+          escapeHtml(record.reviewedBy) +
+          (record.reviewedAt ? ' — ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') +
+          '</div></div>'
+        : '';
+      const currentReviewerMetaHtml = record.reviewedBy && !(isPending && hasPreviousComments)
+        ? '<div class="meta reviewer-meta">ตรวจโดย: ' + escapeHtml(record.reviewedBy) + (record.reviewedAt ? ' · ' + new Date(record.reviewedAt).toLocaleString('th-TH') : '') + '</div>'
+        : '';
+
+      card.innerHTML =
+        '<div class="app-card-inner">' +
+        '<div class="app-card-head">' +
+          '<div class="left">' +
+            '<div>' +
+              '<div class="name">' + escapeHtml(record.discordUsername || record.discordId) + '</div>' +
+              '<div class="meta">Steam: ' + escapeHtml(record.steamId) + ' · ' + new Date(record.submittedAt).toLocaleString('th-TH') + '</div>' +
+              previousReviewerMetaHtml +
+              currentReviewerMetaHtml +
+            '</div>' +
+          '</div>' +
+
+          '<div style="display:flex;align-items:center;">' + streamerBadge + resubmitBadge + prevCommentBadge +
+          '<div class="status-pill main-status" style="color:' + st.color + ';background:' + st.bg + ';border-color:' + st.bg + '">' + st.label + '</div></div>' +
+        '</div>' +
+        '<div class="app-card-body">' +
+          '<div class="field"><div class="label">Discord ID</div><div class="value">' + escapeHtml(record.discordId) + '</div></div>' +
+          '<div class="field"><div class="label">Social Media</div><div class="value">' + escapeHtml(record.socialMedia || '-') + '</div></div>' +
+          (isStreamer ? '<div class="field"><div class="label">ลิงก์ช่องทางการสตรีม</div><div class="value">' + escapeHtml(record.streamLink) + '</div></div>' : '') +
+          reviewerInfoHtml +
+          answersHtml +
+          previousCommentHtml +
+          '<div class="review-history">' + reviewHistoryHtml + '</div>' +
+          '<div class="review-row">' +
+            '<select class="status-select">' +
+              Object.keys(STATUS_LABELS).map(k=>'<option value="'+k+'"'+(record.status===k?' selected':'')+'>'+STATUS_LABELS[k].label+'</option>').join('') +
+            '</select>' +
+            '<textarea class="admin-comment" placeholder="ความเห็นถึงผู้สมัคร เช่น เหตุผลที่ไม่ผ่าน หรือข้อที่ต้องแก้ไข...">' + escapeHtml(record.adminComment || '') + '</textarea>' +
+            '<div class="review-actions">' +
+              '<button class="save-btn">บันทึกผลการตรวจสอบ</button>' +
+              '<button class="delete-btn"' + (record.status !== 'rejected' ? ' disabled title="ลบได้เฉพาะใบที่สถานะ ไม่ผ่านการพิจารณา เท่านั้น"' : '') + '>ลบใบสมัครนี้</button>' +
+              '<span class="save-status"></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '</div>';
+
+      const head = card.querySelector('.app-card-head');
+      const body = card.querySelector('.app-card-body');
+      if(openKeys.has(key)) body.classList.add('open');
+      head.addEventListener('click', ()=>{
+        body.classList.toggle('open');
+        if(body.classList.contains('open')) openKeys.add(key);
+        else openKeys.delete(key);
+      });
+
+      const saveBtn = card.querySelector('.save-btn');
+      const deleteBtn = card.querySelector('.delete-btn');
+      const saveStatusEl = card.querySelector('.save-status');
+      saveBtn.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        const newStatus = card.querySelector('.status-select').value;
+        const newComment = card.querySelector('.admin-comment').value.trim();
+        const oldStatus = record.status || 'pending'; // เก็บไว้ก่อนเขียนทับ เอาไว้ปรับตัวเลขบนแท็บ
+        saveBtn.disabled = true;
+        saveStatusEl.textContent = 'กำลังบันทึก...';
+        // เก็บผลตรวจสอบรอบก่อนหน้า (ถ้ามี) ไว้ใน reviewHistory ก่อนเขียนทับ
+        // ทำแบบนี้ทุกครั้งไม่ว่ารอบใหม่จะให้สถานะอะไร (รวมถึงผ่าน/ผ่านรอเซิฟเปิด)
+        // แก้บั๊กเดิม: โค้ดเขียนทับ adminComment/reviewedBy ตรงๆ ทุกครั้งที่บันทึก
+        // ความเห็นของทีมงานรอบก่อนๆ เลยหายไปจากหน้า admin — เห็นชัดสุดตอนกด
+        // "ผ่าน"/"ผ่านแล้วรอเซิฟเปิด" เพราะเป็นสถานะปิดจ๊อบ ไม่มีการ resubmit
+        // ให้กลับมาเห็นความเห็นเดิมได้อีกแล้ว
+        const history = Array.isArray(record.reviewHistory) ? record.reviewHistory.slice() : [];
+        if(record.reviewedBy){
+          history.push({
+            status: record.status || 'pending',
+            comment: record.adminComment || '',
+            reviewedBy: record.reviewedBy,
+            reviewedAt: record.reviewedAt || null
+          });
+        }
+        // ย้ายความเห็นเดิมตอนผู้สมัคร resubmit (ถ้ามี) เข้า history เดียวกัน กันตกหล่น
+        if(record.previousComment){
+          history.push({
+            status: 'ก่อนแก้ไขและส่งใหม่',
+            comment: record.previousComment,
+            reviewedBy: record.previousReviewedBy || '-',
+            reviewedAt: null
+          });
+        }
+        const updated = Object.assign({}, record, {
+          status: newStatus,
+          adminComment: newComment,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: staffUser.username,
+          resubmittedAt: null, // ตรวจแล้ว เลยเอาป้าย "แก้ไขและส่งใหม่" ออก
+          previousComment: null,
+          previousReviewedBy: null,
+          reviewHistory: history
+        });
+        try{
+          const ok = await window.storage.set(key, JSON.stringify(updated), true);
+          if(!ok) throw new Error('save failed');
+          saveStatusEl.textContent = 'บันทึกแล้ว ✓';
+          // ปรับตัวเลขบนแท็บทันที ไม่ต้องยิง count query ใหม่ (ประหยัด reads)
+          if(oldStatus !== newStatus){
+            statusCounts[oldStatus] = Math.max(0, (statusCounts[oldStatus] || 0) - 1);
+            statusCounts[newStatus] = (statusCounts[newStatus] || 0) + 1;
+            renderCounts();
+          }
+          record.status = newStatus;
+          record.adminComment = newComment;
+          record.reviewedAt = updated.reviewedAt;
+          record.reviewedBy = updated.reviewedBy;
+          record.resubmittedAt = null;
+          record.previousComment = null;
+          record.previousReviewedBy = null;
+          record.reviewHistory = history;
+
+          // อัปเดตกล่องประวัติความเห็นทั้งหมดในการ์ดให้ตรงกับข้อมูลล่าสุดทันที
+          const historyContainer = card.querySelector('.review-history');
+          if(historyContainer) historyContainer.innerHTML = buildHistoryHtml(history);
+          // ความเห็นเดิมจากตอน resubmit ถูกย้ายเข้า history แล้ว เอาช่อง/ป้ายเดิมออก
+          const prevField = card.querySelector('.previous-comment-field');
+          if(prevField) prevField.remove();
+          const prevBadge = card.querySelector('.prev-comment-badge');
+          if(prevBadge){
+            if(history.length > 0) prevBadge.textContent = '📝 มีความเห็นเดิม (' + history.length + ')';
+            else prevBadge.remove();
+          }
+
+          // อัปเดตป้าย "ตรวจโดย" ที่หัวการ์ด + แถวข้อมูลผู้ตรวจในการ์ด ให้ตรงกับค่าล่าสุดทันที
+          // (แก้บั๊กเดิม: ก่อนหน้านี้ record.reviewedBy ไม่เคยถูกอัปเดตในหน่วยความจำ
+          //  ต้องกด "โหลดใหม่" ก่อนถึงจะเห็นชื่อผู้ตรวจล่าสุด)
+          const reviewerText = 'ตรวจโดย: ' + record.reviewedBy + ' · ' + new Date(record.reviewedAt).toLocaleString('th-TH');
+          let reviewerBadge = card.querySelector('.reviewer-meta');
+          if(!reviewerBadge){
+            reviewerBadge = document.createElement('div');
+            reviewerBadge.className = 'meta reviewer-meta';
+            card.querySelector('.app-card-head .left > div').appendChild(reviewerBadge);
+          }
+          reviewerBadge.textContent = reviewerText;
+
+          let reviewerField = card.querySelector('.reviewer-field .value');
+          if(!reviewerField){
+            const field = document.createElement('div');
+            field.className = 'field reviewer-field';
+            field.innerHTML = '<div class="label">ตรวจสอบล่าสุดโดย</div><div class="value"></div>';
+            card.querySelector('.review-row').insertAdjacentElement('beforebegin', field);
+            reviewerField = field.querySelector('.value');
+          }
+          reviewerField.textContent = record.reviewedBy + ' — ' + new Date(record.reviewedAt).toLocaleString('th-TH');
+          const pill = card.querySelector('.main-status');
+          const s = STATUS_LABELS[newStatus];
+          pill.textContent = s.label;
+          pill.style.color = s.color;
+          pill.style.background = s.bg;
+          pill.style.borderColor = s.bg;
+          // ปุ่มลบใช้ได้เฉพาะตอนสถานะเป็น "ไม่ผ่านการพิจารณา" เท่านั้น
+          // (ตรงกับ Firestore Security Rules ที่อนุญาต delete เฉพาะ status == 'rejected')
+          deleteBtn.disabled = newStatus !== 'rejected';
+          deleteBtn.title = newStatus !== 'rejected'
+            ? 'ลบได้เฉพาะใบที่สถานะ ไม่ผ่านการพิจารณา เท่านั้น'
+            : '';
+        }catch(err){
+          saveStatusEl.textContent = 'บันทึกไม่สำเร็จ ลองอีกครั้ง';
+        }
+        saveBtn.disabled = false;
+      });
+
+      deleteBtn.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        const confirmed = confirm(
+          'ยืนยันลบใบสมัครของ "' + (record.discordUsername || record.discordId) + '" ถาวร?\การลบนี้กู้คืนไม่ได้'
+        );
+        if(!confirmed) return;
+        deleteBtn.disabled = true;
+        saveStatusEl.textContent = 'กำลังลบ...';
+        try{
+          await window.storage.delete(key, true);
+          allRecords = allRecords.filter(x => x.key !== key);
+          statusCounts[record.status] = Math.max(0, (statusCounts[record.status] || 0) - 1);
+          renderCounts();
+          card.remove();
+          if(appList.children.length === 0) emptyMsg.style.display = 'block';
+        }catch(err){
+          saveStatusEl.textContent = 'ลบไม่สำเร็จ ลองอีกครั้ง';
+          deleteBtn.disabled = false;
+        }
+      });
+
+      appList.appendChild(card);
+    });
+  }
+
+  document.getElementById('filterRow').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('.filter-btn');
+    if(!btn) return;
+    document.querySelectorAll('#filterRow .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    if(currentFilter === 'all'){
+      // "ทั้งหมด" ไม่ดึงข้อมูลใหม่ — โชว์แค่สถานะที่เคยกดเปิดดูแล้วในเซสชันนี้
+      renderList();
+    }else if(!loadedStatuses.has(currentFilter)){
+      await fetchStatus(currentFilter);
+    }else{
+      renderList();
+    }
+  });
+
+  document.getElementById('typeFilterRow').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.filter-btn');
+    if(!btn) return;
+    document.querySelectorAll('#typeFilterRow .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTypeFilter = btn.dataset.typeFilter;
+    renderList();
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', ()=>{
+    loadApplications();
+    refreshCounts();
+  });
+
+  // ============ เฉลยคำตอบ (answer key) modal ============
+  const akOverlay = document.getElementById('answerKeyOverlay');
+  const akFields = document.getElementById('answerKeyFields');
+  const akStatus = document.getElementById('answerKeyStatus');
+  let akCurrentType = 'regular';
+
+  function renderAnswerKeyFields(){
+    const labels = akCurrentType === 'streamer' ? streamerQuestionLabels : questionLabels;
+    const saved = answerKeys[akCurrentType] || {};
+    const defaults = DEFAULT_ANSWER_HINTS[akCurrentType] || {};
+    akFields.innerHTML = Object.keys(labels).map(id=>{
+      const val = saved[id] !== undefined ? saved[id] : (defaults[id] || '');
+      return '<div class="answerkey-q">' +
+        '<div class="aq-label">' + escapeHtml(labels[id]) + '</div>' +
+        '<textarea data-qid="' + id + '" placeholder="พิมพ์เฉลย/แนวคำตอบที่ถูกต้องของข้อนี้...">' + escapeHtml(val) + '</textarea>' +
+        '</div>';
+    }).join('');
+  }
+
+  document.getElementById('answerKeyBtn').addEventListener('click', ()=>{
+    akOverlay.classList.add('open');
+    akStatus.textContent = '';
+    renderAnswerKeyFields();
+  });
+  document.getElementById('answerKeyCloseBtn').addEventListener('click', ()=>{
+    akOverlay.classList.remove('open');
+  });
+  akOverlay.addEventListener('click', (e)=>{
+    if(e.target === akOverlay) akOverlay.classList.remove('open');
+  });
+  document.getElementById('answerKeyTabs').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.answerkey-tab');
+    if(!btn) return;
+    document.querySelectorAll('#answerKeyTabs .answerkey-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    akCurrentType = btn.dataset.aktype;
+    akStatus.textContent = '';
+    renderAnswerKeyFields();
+  });
+  document.getElementById('answerKeySaveBtn').addEventListener('click', async ()=>{
+    const values = {};
+    akFields.querySelectorAll('textarea[data-qid]').forEach(ta=>{
+      const v = ta.value.trim();
+      if(v) values[ta.dataset.qid] = v;
+    });
+    akStatus.textContent = 'กำลังบันทึก...';
+    try{
+      const ok = await window.storage.set('answerkey:' + akCurrentType, JSON.stringify(values), true);
+      if(!ok) throw new Error('save failed');
+      answerKeys[akCurrentType] = values;
+      akStatus.textContent = 'บันทึกเฉลยแล้ว ✓';
+      renderList(); // อัปเดตเฉลยที่แทรกอยู่ใต้คำตอบผู้สมัครทุกใบให้ตรงกับของใหม่
+    }catch(e){
+      akStatus.textContent = storageErrorMessage(e);
+    }
+  });
+
+  document.getElementById('cleanupBtn').addEventListener('click', async ()=>{
+    const cleanupStatus = document.getElementById('cleanupStatus');
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+
+    // ดึงเฉพาะใบ "ไม่ผ่านการพิจารณา" สดๆ ก่อนเช็ค — ไม่พึ่งพา allRecords ที่อาจ
+    // ยังไม่เคยโหลดสถานะนี้เข้ามาเลย (เช่นแอดมินยังไม่เคยกดแท็บ "ไม่ผ่าน")
+    cleanupStatus.textContent = 'กำลังตรวจสอบใบสมัคร Rejected...';
+    document.getElementById('cleanupBtn').disabled = true;
+    await fetchStatus('rejected', {silent:true});
+    document.getElementById('cleanupBtn').disabled = false;
+
+    const targets = allRecords.filter(({record})=>{
+      if(record.status !== 'rejected') return false;
+      const refDate = record.reviewedAt || record.submittedAt;
+      if(!refDate) return false;
+      return new Date(refDate) < cutoff;
+    });
+
+    if(targets.length === 0){
+      cleanupStatus.textContent = 'ไม่มีใบสมัคร Rejected ที่เกิน 90 วัน';
+      return;
+    }
+
+    const confirmed = confirm(
+      'พบใบสมัคร Rejected ที่เกิน 90 วัน จำนวน ' + targets.length + ' ใบ\n' +
+      'ยืนยันลบทั้งหมดถาวร? การลบนี้กู้คืนไม่ได้'
+    );
+    if(!confirmed) return;
+
+    document.getElementById('cleanupBtn').disabled = true;
+    let done = 0, failed = 0;
+    for(const {key} of targets){
+      try{
+        await window.storage.delete(key, true);
+        done++;
+      }catch(e){ failed++; }
+    }
+    cleanupStatus.textContent = 'ลบสำเร็จ ' + done + ' ใบ' + (failed ? (', ล้มเหลว ' + failed + ' ใบ') : '');
+    document.getElementById('cleanupBtn').disabled = false;
+    if(done > 0){
+      statusCounts.rejected = Math.max(0, (statusCounts.rejected || 0) - done);
+      renderCounts();
+    }
+    await fetchStatus('rejected', {silent:true});
+  });
+
+  async function loginWithToken(token){
+    const res = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if(!res.ok) throw new Error('discord api ' + res.status);
+    const u = await res.json();
+
+    if(!STAFF_DISCORD_IDS.includes(u.id)){
+      clearSession();
+      deniedMsg.classList.add('show');
+      return;
+    }
+
+    staffUser = { id: u.id, username: u.username + (u.discriminator && u.discriminator !== '0' ? '#' + u.discriminator : '') };
+    authWrap.style.display = 'none';
+    panelWrap.style.display = 'block';
+    applicationControlWrap.style.display = 'block';
+    document.getElementById('whoAmI').textContent = 'เข้าสู่ระบบในชื่อ: ' + staffUser.username;
+    await Promise.all([loadAnswerKeys(), loadApplicationSettings()]);
+    fetchStatus('pending'); // โหลดเริ่มต้นเฉพาะ "รอตรวจสอบ" เท่านั้น เพื่อลด reads
+    refreshCounts(); // ตัวเลขบนแท็บ — ใช้ aggregation query ต้นทุนต่ำ ไม่กระทบเป้าหมายลด reads
+    // หมายเหตุ: เอาการโหลดใหม่อัตโนมัติออกแล้วตามที่ขอ — หน้าเว็บจะไม่รีเฟรชข้อมูลเอง
+    // ผู้ใช้ต้องกดปุ่ม "โหลดใหม่" เองเมื่อต้องการข้อมูลล่าสุด
+  }
+
+  document.getElementById('logoutLink').addEventListener('click', ()=>{
+    clearSession();
+    staffUser = null;
+    authWrap.style.display = 'block';
+    panelWrap.style.display = 'none';
+    applicationControlWrap.style.display = 'none';
+    closeApplicationControl();
+    deniedMsg.classList.remove('show');
+    allRecords = [];
+    loadedStatuses = new Set();
+    currentFilter = 'pending';
+    statusCounts = { pending:0, approved:0, approved_waiting:0, rejected:0, needs_revision:0 };
+    renderCounts();
+    document.querySelectorAll('#filterRow .filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.filter === 'pending'));
+  });
+
+  async function init(){
+    const fresh = parseAccessToken();
+    if(fresh){
+      history.replaceState(null, '', REDIRECT_URI);
+      saveSession(fresh.token, fresh.expiresIn);
+      try{
+        await loginWithToken(fresh.token);
+      }catch(e){
+        clearSession();
+        deniedMsg.textContent = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่';
+        deniedMsg.classList.add('show');
+      }
+      return;
+    }
+
+    const saved = loadSession();
+    if(saved){
+      try{
+        await loginWithToken(saved);
+      }catch(e){
+        clearSession();
+      }
+    }
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>
