@@ -104,7 +104,7 @@ select, textarea.admin-comment{
   width:100%; background:rgba(255,255,255,0.45); border:1px solid var(--gold-dim); border-radius:3px;
   color:var(--ink); padding:10px 12px; font-family:'Noto Serif Thai', sans-serif; font-size:14px;
 }
-textarea.admin-comment{ min-height:70px; resize:vertical; }
+textarea.admin-comment{ min-height:70px; resize:vertical; overflow-y:hidden; }
 textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red); box-shadow:0 0 0 3px rgba(122,32,32,0.15); background:rgba(255,255,255,0.65); }
 .review-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .save-btn{
@@ -385,6 +385,16 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 
   function clearSession(){
     try{ localStorage.removeItem(SESSION_KEY); }catch(e){ /* ignore */ }
+  }
+  // ================================================
+
+  // ============ AUTO-GROW TEXTAREAS ============
+  // ทำให้ช่องกรอกความเห็นของทีมงาน (.admin-comment) ขยายความสูงลงล่างเอง
+  // ตามเนื้อหาที่พิมพ์/แสดงผล เพื่อให้เห็นข้อความทั้งหมดโดยไม่ต้องเลื่อน scroll ในช่อง
+  function autoGrow(el){
+    if(!el) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
   }
   // ================================================
 
@@ -884,6 +894,17 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         body.classList.toggle('open');
         if(body.classList.contains('open')) openKeys.add(key);
         else openKeys.delete(key);
+      });
+
+      // ให้ช่องกรอกความเห็นของทีมงาน (.admin-comment) ขยายความสูงลงล่างเองตาม
+      // เนื้อหา ทั้งตอนโหลดค่าที่เคยกรอกไว้เดิม (record.adminComment) และตอนพิมพ์ใหม่
+      const adminCommentEl = card.querySelector('.admin-comment');
+      autoGrow(adminCommentEl);
+      adminCommentEl.addEventListener('input', ()=> autoGrow(adminCommentEl));
+      // ช่องนี้ซ่อนอยู่ในการ์ดที่ยังไม่กาง (display:none) ตอนแรกโหลด — scrollHeight
+      // จะคำนวณได้ไม่ถูกต้องตอนที่ยังซ่อนอยู่ จึงต้องคำนวณใหม่อีกครั้งตอนกางการ์ดด้วย
+      head.addEventListener('click', ()=>{
+        if(body.classList.contains('open')) autoGrow(adminCommentEl);
       });
 
       const saveBtn = card.querySelector('.save-btn');
