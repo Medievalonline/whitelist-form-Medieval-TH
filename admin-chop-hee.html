@@ -946,11 +946,14 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           adminComment: newComment,
           reviewedAt: new Date().toISOString(),
           reviewedBy: staffUser.username,
-          resubmittedAt: null, // ตรวจแล้ว เลยเอาป้าย "แก้ไขและส่งใหม่" ออก
-          previousComment: null,
-          previousReviewedBy: null,
           reviewHistory: history
         });
+        
+        // แก้ไขบั๊ก: ลบฟิลด์เหล่านี้ออก แทนที่จะตั้งให้ null เพื่อให้เข้ากฎ Firestore
+        // (ห้ามมีฟิลด์ที่เป็น null ในเอกสารเดิมที่ไม่มี)
+        delete updated.resubmittedAt;
+        delete updated.previousComment;
+        delete updated.previousReviewedBy;
         try{
           const ok = await window.storage.set(key, JSON.stringify(updated), true);
           if(!ok) throw new Error('save failed');
