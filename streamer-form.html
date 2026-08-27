@@ -665,13 +665,23 @@ const Storage = {
   // ================================================
 
   function applyApplicationState(){
-    if(APPLICATION_OPEN) return;
-    document.title = 'ปิดรับสมัคร | แบบฟอร์ม Whitelist สตรีมเมอร์ MEDIEVAL ROLEPLAY TH';
-    document.getElementById('heroSub').textContent = 'ขณะนี้ระบบปิดรับสมัครชั่วคราว';
+    if(APPLICATION_OPEN){
+      document.title = 'แบบฟอร์มสมัคร Whitelist | MEDIEVAL ROLEPLAY TH';
+      closedPanel.classList.remove('show');
+      document.getElementById('warningWrap').style.display = '';
+      authCard.closest('.mo-frame').style.display = '';
+      formSection.style.display = '';
+      return;
+    }
+
+    // ปิดเฉพาะการสมัครใหม่ แต่ยังคงแสดง Login เพื่อให้ผู้สมัครเดิม
+    // เข้าสู่ระบบด้วย Discord เดิมและแก้ไขใบสมัครที่ถูกตีกลับได้
+    document.title = 'ปิดรับสมัครใหม่ | แบบฟอร์ม Whitelist MEDIEVAL ROLEPLAY TH';
+    document.getElementById('heroSub').textContent = 'ขณะนี้ปิดรับสมัครใหม่ แต่ผู้สมัครเดิมยังสามารถเข้าสู่ระบบเพื่อแก้ไขใบสมัครได้';
     document.getElementById('warningWrap').style.display = 'none';
-    authCard.closest('.mo-frame').style.display = 'none';
-    formSection.style.display = 'none';
-    closedMessage.textContent = window.WHITELIST_CLOSED_MESSAGE || 'ขณะนี้ปิดรับสมัครชั่วคราว กรุณาติดตามประกาศจากทีมงาน';
+    authCard.closest('.mo-frame').style.display = '';
+    closedMessage.textContent = (window.WHITELIST_CLOSED_MESSAGE || 'ขณะนี้ปิดรับสมัครชั่วคราว กรุณาติดตามประกาศจากทีมงาน') +
+      ' หากเคยส่งใบสมัครแล้ว ให้เข้าสู่ระบบด้วย Discord บัญชีเดิมเพื่อแก้ไขใบสมัคร';
     closedPanel.classList.add('show');
   }
 
@@ -778,7 +788,12 @@ const Storage = {
   async function checkPreviousApplication(discordId){
     try{
       const record = await Storage.getApplication(discordId);
-      if(!record){ prevRecord = null; return; }
+      if(!record){
+        prevRecord = null;
+        // เมื่อปิดรับสมัคร ผู้ใช้ใหม่ต้องไม่สามารถเปิดฟอร์มได้
+        formSection.classList.add('locked');
+        return;
+      }
       prevRecord = record;
       const st = STATUS_LABELS[record.status] || STATUS_LABELS.pending;
 
@@ -820,21 +835,25 @@ const Storage = {
       // ค่าที่ pre-fill เข้าไปด้วย .value ไม่ทริกเกอร์ event 'input' เอง
       // จึงต้องเรียก autoGrow ให้ทุกช่องคำนวณความสูงใหม่ตามเนื้อหาที่เพิ่งใส่เข้าไป
       document.querySelectorAll('textarea').forEach(autoGrow);
+      // ใบสมัครเดิมที่ยังไม่ผ่านสามารถแก้ไขได้ แม้ปิดรับสมัครใหม่แล้ว
+      formSection.classList.remove('locked');
     }catch(e){
       prevRecord = null;
+      formSection.classList.add('locked');
       console.error('checkPreviousApplication failed:', e);
     }
   }
 
-  function setLoggedIn(user){
+  async function setLoggedIn(user){
     currentUser = user;
     authLoggedOut.style.display = 'none';
     authLoggedIn.style.display = 'block';
     discordAvatarEl.src = user.avatarUrl;
     discordUsernameEl.textContent = user.username;
     q3b.value = user.id;
-    formSection.classList.remove('locked');
-    checkPreviousApplication(user.id);
+    // ล็อกไว้ก่อนจนกว่าจะตรวจพบว่าเป็นใบสมัครเดิมที่แก้ไขได้
+    formSection.classList.add('locked');
+    await checkPreviousApplication(user.id);
   }
 
   document.getElementById('logoutLink').addEventListener('click', ()=>{
@@ -856,7 +875,7 @@ const Storage = {
     const avatarUrl = user.avatar
       ? 'https://cdn.discordapp.com/avatars/' + user.id + '/' + user.avatar + '.png?size=64'
       : 'https://cdn.discordapp.com/embed/avatars/' + ((BigInt(user.id) >> 22n) % 6n) + '.png';
-    setLoggedIn({
+    await setLoggedIn({
       id: user.id,
       username: user.username + (user.discriminator && user.discriminator !== '0' ? '#' + user.discriminator : ''),
       avatarUrl: avatarUrl
@@ -888,7 +907,8 @@ const Storage = {
   }
   async function startApplication(){
     await loadApplicationState();
-    if(APPLICATION_OPEN) await init();
+    // ต้อง init แม้ปิดรับสมัคร เพื่อให้ผู้สมัครเดิม Login และแก้ไขได้
+    await init();
   }
   startApplication();
 
@@ -1020,8 +1040,12 @@ const Storage = {
 
     // อ่านสถานะล่าสุดซ้ำก่อนบันทึก เพื่อป้องกันการส่งจากแท็บที่เปิดค้างไว้
     await loadApplicationState();
-    if(!APPLICATION_OPEN){
+    const canEditExisting = !!prevRecord
+      && prevRecord.type === 'streamer'
+      && ['pending', 'rejected', 'needs_revision'].includes(prevRecord.status || 'pending');
+    if(!APPLICATION_OPEN && !canEditExisting){
       applyApplicationState();
+      statusMsg.textContent = 'ขณะนี้ปิดรับสมัครใหม่ ไม่สามารถส่งใบสมัครใหม่ได้ หากเป็นผู้สมัครเดิมกรุณาเข้าสู่ระบบด้วย Discord บัญชีเดิม';
       return;
     }
     statusMsg.style.color = 'var(--danger)';
