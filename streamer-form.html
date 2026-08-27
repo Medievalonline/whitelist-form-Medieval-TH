@@ -678,8 +678,10 @@ const Storage = {
     // เข้าสู่ระบบด้วย Discord เดิมและแก้ไขใบสมัครที่ถูกตีกลับได้
     document.title = 'ปิดรับสมัครใหม่ | แบบฟอร์ม Whitelist MEDIEVAL ROLEPLAY TH';
     document.getElementById('heroSub').textContent = 'ขณะนี้ปิดรับสมัครใหม่ แต่ผู้สมัครเดิมยังสามารถเข้าสู่ระบบเพื่อแก้ไขใบสมัครได้';
-    document.getElementById('warningWrap').style.display = 'none';
-    authCard.closest('.mo-frame').style.display = '';
+      document.getElementById('warningWrap').style.display = 'none';
+      authCard.closest('.mo-frame').style.display = '';
+      // ซ่อนคำถามไว้ก่อน จนกว่าจะพบใบสมัครเดิมที่อนุญาตให้แก้ไข
+      formSection.style.display = 'none';
     closedMessage.textContent = (window.WHITELIST_CLOSED_MESSAGE || 'ขณะนี้ปิดรับสมัครชั่วคราว กรุณาติดตามประกาศจากทีมงาน') +
       ' หากเคยส่งใบสมัครแล้ว ให้เข้าสู่ระบบด้วย Discord บัญชีเดิมเพื่อแก้ไขใบสมัคร';
     closedPanel.classList.add('show');
@@ -836,6 +838,7 @@ const Storage = {
       // จึงต้องเรียก autoGrow ให้ทุกช่องคำนวณความสูงใหม่ตามเนื้อหาที่เพิ่งใส่เข้าไป
       document.querySelectorAll('textarea').forEach(autoGrow);
       // ใบสมัครเดิมที่ยังไม่ผ่านสามารถแก้ไขได้ แม้ปิดรับสมัครใหม่แล้ว
+      formSection.style.display = '';
       formSection.classList.remove('locked');
     }catch(e){
       prevRecord = null;
