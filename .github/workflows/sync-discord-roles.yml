@@ -1,7 +1,7 @@
 name: Sync approved Discord roles
 on:
   schedule:
-    - cron: "0 * * * *"  # วันละครั้ง เวลา 19:00 น. ไทย (UTC+7)
+    - cron: "0 * * * *"  # รันทุก 1 ชัวโมง
   workflow_dispatch:
 permissions:
   contents: read
