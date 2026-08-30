@@ -6,9 +6,10 @@
     "node": ">=20"
   },
   "scripts": {
+    "fetch-data": "node scripts/fetch-data.js",
+    "migrate-queues": "node scripts/migrate-automation-queues.js",
     "sync": "node scripts/sync-discord-roles.js",
-    "notify": "node scripts/notify-applicants.js",
-    "sheets-sync": "node scripts/sync-google-sheets-apps-script.js"
+    "notify": "node scripts/notify-applicants.js"
   },
   "dependencies": {
     "firebase-admin": "^12.6.0"

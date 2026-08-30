@@ -152,6 +152,7 @@ async function main() {
   let failed = 0;
 
   for (const [discordId, data] of Object.entries(allData)) {
+    if (data.notificationPending !== true) continue;
     if (!data.status || data.status === "pending") continue;
     if (!data.reviewedAt) continue;
     if (data.notifiedReviewedAt === data.reviewedAt) {
@@ -180,6 +181,7 @@ async function main() {
     if (sent.ok) {
       await db.collection("applications").doc(discordId).update({
         notifiedReviewedAt: data.reviewedAt,
+        notificationPending: false,
         notifiedStatus: data.status,
         notifiedAt: new Date().toISOString(),
         notifyError: null,

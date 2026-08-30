@@ -1080,7 +1080,9 @@ const Storage = {
       steamId,
       answers: values,
       submittedAt: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
+      roleSyncPending: false,
+      notificationPending: false
     };
 
     // ถ้าเคยสมัครมาก่อน (ต้องแก้ไข / ไม่ผ่าน / รอตรวจสอบ) ให้ทำเครื่องหมายว่าเป็นการ "ส่งแก้ไขใหม่"

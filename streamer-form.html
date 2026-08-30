@@ -1128,7 +1128,9 @@ const Storage = {
       streamLink,
       answers: values,
       submittedAt: new Date().toISOString(),
-      status: 'pending'
+      status: 'pending',
+      roleSyncPending: false,
+      notificationPending: false
     };
 
     // ดึงใบสมัครเดิมมาใหม่อีกครั้งตรงนี้ (แทนที่จะใช้ prevRecord ที่ค้างมาจากตอน login)

@@ -73,11 +73,11 @@ async function main() {
   // อ่านจาก cache แทน Firestore
   const allData = loadLocalData();
   const entries = Object.entries(allData).filter(
-    ([, data]) => data.status === "approved"
+    ([, data]) => data.status === "approved" && data.roleSyncPending === true
   );
 
   if (entries.length === 0) {
-    console.log("ไม่มีใบสมัครที่ approved อยู่ในตอนนี้");
+    console.log("ไม่มีใบสมัครที่รอเพิ่มยศ Discord อยู่ในตอนนี้");
     return;
   }
 
@@ -97,6 +97,7 @@ async function main() {
     if (result.ok) {
       await db.collection("applications").doc(discordId).update({
         discordRoleSynced: true,
+        roleSyncPending: false,
         discordRoleSyncedAt: new Date().toISOString(),
         discordRoleError: null,
       });

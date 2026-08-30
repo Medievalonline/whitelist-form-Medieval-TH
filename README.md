@@ -13,11 +13,9 @@
 - ⚙️ GitHub Actions สำหรับ Sync ยศ Discord
 - 📡 ผู้สมัครตรวจผลและแก้ไขใบสมัครผ่านหน้าสมัครเดิม
 - 📩 ระบบส่ง DM แจ้งผลตรวจผ่าน Discord พร้อมลิงก์ฟอร์มเดิมแยกทั่วไป/สตรีมเมอร์
-- 📊 ระบบซิงก์ข้อมูลใบสมัครลง Google Sheets อัตโนมัติ
+- ⚡ GitHub Actions อ่านเฉพาะใบสมัครที่มีงานต้องดำเนินการ เพื่อลด Firestore reads
 
 รายละเอียดการติดตั้งส่วนแจ้งเตือนดูที่ [README-Discord-Notification.md](README-Discord-Notification.md)
-
-รายละเอียดการตั้งค่า Google Sheets ดูที่ [README-Google-Sheets-Setup.md](README-Google-Sheets-Setup.md)
 
 > **สำคัญ:** Repository นี้ไม่ใช่ Static HTML อย่างเดียว หากต้องการให้ระบบสมัคร Whitelist และ Admin ทำงานจริง จำเป็นต้องตั้งค่า Firebase Firestore ก่อน
 
@@ -60,7 +58,7 @@ whitelist-form-Medieval-TH/
 └── README-Discord-Notification.md
 ```
 
-Repository ปัจจุบันมีไฟล์หลักตามรายการข้างต้น รวมถึง Workflow สำหรับ Sync Discord Roles และ Node.js script สำหรับจัดการยศ Discord
+Repository ปัจจุบันมีไฟล์หลักตามรายการข้างต้น รวมถึง Workflow สำหรับ Sync Discord Roles/แจ้งผล และ Node.js scripts สำหรับดึงข้อมูลที่จำเป็นและจัดการ Discord โดยไม่มีการซิงก์ Google Sheets
 
 ---
 
@@ -85,7 +83,8 @@ admin-chop-hee.html
    ▼
 GitHub Actions
    │
-   ├── ส่ง DM แจ้งผล + ลิงก์หน้าสมัครเดิม
+         └── ส่ง DM แจ้งผล + ลิงก์หน้าสมัครเดิม
+
    ▼
    │
    ▼
@@ -468,7 +467,20 @@ status == approved
 บันทึกผลกลับ Firestore
 ```
 
-ระบบจะข้ามคนที่เคย Sync แล้ว เพื่อป้องกันการเพิ่ม Role ซ้ำ
+ระบบจะข้ามคนที่เคย Sync แล้ว เพื่อป้องกันการเพิ่ม Role ซ้ำ โดยใช้ `roleSyncPending` เป็นคิวและจะ retry อัตโนมัติเมื่อ Discord API ล้มเหลว
+
+ระบบแจ้ง DM ใช้คิว `notificationPending` เช่นเดียวกัน ส่วน workflow จะอ่านเฉพาะเอกสารที่มีคิวค้างอยู่ ไม่อ่านใบสมัครทั้ง collection ทุกชั่วโมง
+
+### ย้ายข้อมูลเดิมเข้าสู่คิวแบบใหม่
+
+หลังอัปเดตโค้ดครั้งแรก ให้รันคำสั่งนี้หนึ่งครั้งจากเครื่องที่มี Service Account และตั้งค่า environment `FIREBASE_SERVICE_ACCOUNT_JSON` แล้ว:
+
+```bash
+npm ci
+npm run migrate-queues
+```
+
+คำสั่งนี้จะอ่านข้อมูลเดิมหนึ่งครั้งและเติม queue flags ให้ใบสมัครที่มีผลตรวจแล้ว หากไม่รัน ใบสมัครเก่าที่ไม่มี flags อาจไม่ถูกนำไปแจ้ง DM หรือเพิ่มยศใน workflow ใหม่
 
 ---
 
@@ -1079,10 +1091,8 @@ GitHub Actions สำหรับ Discord Role Sync ก็จะใช้ Code �
 | `scripts/sync-discord-roles.js` | เพิ่มยศ Discord อัตโนมัติ |
 | `.github/workflows/sync-discord-roles.yml` | GitHub Actions สำหรับแอดยศและแจ้งผล Discord |
 | `scripts/notify-applicants.js` | ส่ง DM แจ้งผลตรวจและลิงก์ฟอร์มเดิม |
-| `scripts/sync-google-sheets-apps-script.js` | ส่งใบสมัครไปยัง Google Apps Script เพื่อบันทึกลง Google Sheets |
-| `apps-script/Code.gs` | ตัวรับข้อมูลและอัปเดต Google Sheets |
 | `README-Discord-Notification.md` | คู่มือติดตั้งระบบแจ้งผล Discord |
-| `README-Google-Sheets-Setup.md` | คู่มือตั้งค่า Google Sheets |
+| `scripts/fetch-data.js` | ดึงเฉพาะใบสมัครที่มีสถานะต้องดำเนินการให้ workflow ใช้ร่วมกัน |
 | `package.json` | Node.js / Dependencies |
 
 ---

@@ -970,7 +970,9 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           adminComment: newComment,
           reviewedAt: new Date().toISOString(),
           reviewedBy: staffUser.username,
-          reviewHistory: history
+          reviewHistory: history,
+          roleSyncPending: newStatus === 'approved',
+          notificationPending: newStatus !== 'pending'
         });
         
         // แก้ไขบั๊ก: ลบฟิลด์เหล่านี้ออก แทนที่จะตั้งให้ null เพื่อให้เข้ากฎ Firestore

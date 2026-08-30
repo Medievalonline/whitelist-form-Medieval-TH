@@ -1,8 +1,7 @@
 // scripts/fetch-data.js
 // ====================================================================
-// ดึงข้อมูลจาก Firestore ครั้งเดียว แล้วบันทึกเป็น /tmp/applications.json
-// เพื่อให้ sync-discord-roles.js และ notify-applicants.js
-// อ่านจากไฟล์แทน ลด Firestore reads จาก 2 → 1 ครั้งต่อการรัน
+// ดึงเฉพาะเอกสารที่มีงานอัตโนมัติค้างอยู่ แล้วแชร์ข้อมูลให้ sync/notify
+// ไม่อ่านใบสมัครทั้ง collection และไม่อ่านใบสมัคร pending ที่ไม่มีงานต่อ
 // ====================================================================
 
 const { initializeApp, cert, getApps } = require("firebase-admin/app");
@@ -27,19 +26,25 @@ async function main() {
     initializeApp({ credential: cert(loadServiceAccount()) });
   }
   const db = getFirestore();
+  const collection = db.collection(COLLECTION);
 
-  console.log("กำลังดึงข้อมูลจาก Firestore...");
-  const snap = await db.collection(COLLECTION).get();
+  console.log("กำลังดึงเฉพาะงานอัตโนมัติที่ค้างอยู่จาก Firestore...");
+  const [roleQueue, notificationQueue] = await Promise.all([
+    collection.where("roleSyncPending", "==", true).get(),
+    collection.where("notificationPending", "==", true).get(),
+  ]);
 
-  // แปลง snapshot เป็น object { [discordId]: data }
   const result = {};
-  for (const doc of snap.docs) {
-    result[doc.id] = doc.data();
+  for (const snapshot of [roleQueue, notificationQueue]) {
+    for (const doc of snapshot.docs) {
+      result[doc.id] = doc.data();
+    }
   }
 
   fs.writeFileSync(OUTPUT_PATH, JSON.stringify(result, null, 2), "utf8");
   console.log(
-    `บันทึกข้อมูล ${snap.size} รายการไปที่ ${OUTPUT_PATH} เรียบร้อยแล้ว`
+    `พบเอกสารที่ต้องดำเนินการ ${Object.keys(result).length} รายการ ` +
+      `(role queue ${roleQueue.size}, notification queue ${notificationQueue.size})`
   );
 }
 
