@@ -1,34 +1,13 @@
 // scripts/notify-applicants.js
 // ====================================================================
-// สคริปต์นี้รันโดย GitHub Actions ตามตารางเวลาเดียวกับ sync-discord-roles.js
-// (ดู .github/workflows/sync-discord-roles.yml) — ทำหน้าที่ "ทัก DM ส่วนตัว"
-// ไปหาผู้สมัครทุกครั้งที่ทีมงานตรวจใบสมัครเสร็จ (กด "บันทึกผลการตรวจสอบ"
-// ใน admin.html) ไม่ว่าผลจะเป็น ผ่าน / ผ่านแล้วรอเซิฟเปิด / ไม่ผ่าน / ต้องแก้ไข
-//
-// ทำงานดังนี้:
-// 1. ต่อ Firestore ด้วย Firebase Admin SDK (ใช้ Service Account เดียวกับ
-//    sync-discord-roles.js ไม่ต้องสร้างใหม่)
-// 2. ดึงใบสมัครทั้งหมดในคอลเลกชัน "applications"
-// 3. เทียบ reviewedAt (เวลาที่ทีมงานตรวจล่าสุด) กับ notifiedReviewedAt
-//    (เวลาที่เคยแจ้งเตือนไปแล้วครั้งล่าสุด) — ถ้าไม่ตรงกัน = มีผลตรวจใหม่
-//    ที่ยังไม่เคยแจ้ง (ครอบคลุมทั้งกรณีเปลี่ยนสถานะ และกรณีทีมงานแก้ comment
-//    ซ้ำในสถานะเดิม เช่น แก้ข้อความ "ต้องแก้ไข" รอบสอง)
-// 4. เปิด DM กับผู้สมัคร แล้วส่งข้อความบอกผลตรวจ + ลิงก์กลับไปหน้าสมัครเดิมตามประเภทใบสมัคร
-// 5. เขียนผลกลับ Firestore (notifiedReviewedAt / notifyError) กันแจ้งซ้ำ
-//
-// สคริปต์นี้ "ไม่ต้องการสิทธิ์ Manage Roles" เหมือน sync-discord-roles.js
-// แต่ผู้สมัครต้องเป็นสมาชิกในเซิร์ฟเวอร์ Discord เดียวกับบอทแล้ว (หรือเปิด
-// รับ DM จากสมาชิกเซิร์ฟเวอร์) มิฉะนั้น Discord API จะตอบ 403
+// อ่านข้อมูลจาก /tmp/applications.json (ที่ fetch-data.js ดึงไว้แล้ว)
+// แทนการดึง Firestore ใหม่ — ประหยัด Firestore reads
 // ====================================================================
 
 const { initializeApp, cert, getApps } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const fs = require("fs");
 
-// ---------------------------------------------------------------------
-// ลิงก์หน้าแบบฟอร์ม — ใช้สำหรับให้ผู้สมัคร Login ด้วย Discord บัญชีเดิม
-// เพื่อดูสถานะ, ดูความเห็นทีมงาน, และแก้ไข/ส่งใบสมัครใหม่ได้ด้วยตัวเอง
-// (แยกลิงก์ตามประเภทใบสมัคร record.type: 'streamer' หรือปกติ)
-// ---------------------------------------------------------------------
 const REGULAR_FORM_URL =
   process.env.REGULAR_FORM_URL ||
   "https://bikiniz-fivem.github.io/whitelist-form-Medieval-TH/whitelist-form.html";
@@ -41,9 +20,8 @@ function formUrlForRecord(record) {
 }
 
 const DISCORD_API = "https://discord.com/api/v10";
-const COLLECTION = "applications";
+const LOCAL_DATA_PATH = "/tmp/applications.json";
 
-// ต้องตรงกับสถานะที่หน้า admin-chop-hee.html ใช้บันทึก
 const STATUS_MESSAGES = {
   approved: {
     title: "✅ ใบสมัคร Whitelist ของคุณผ่านการพิจารณาแล้ว ยินดีต้อนรับสู่ Erde และพบกันภายในเซิร์ฟเวอร์ครับ ⚔️!",
@@ -71,6 +49,16 @@ function loadServiceAccount() {
     );
   }
   return JSON.parse(raw);
+}
+
+// อ่านจาก cache ที่ fetch-data.js บันทึกไว้
+function loadLocalData() {
+  if (!fs.existsSync(LOCAL_DATA_PATH)) {
+    throw new Error(
+      `ไม่พบไฟล์ ${LOCAL_DATA_PATH} — ต้องรัน fetch-data.js ก่อน`
+    );
+  }
+  return JSON.parse(fs.readFileSync(LOCAL_DATA_PATH, "utf8"));
 }
 
 function buildMessageContent(record) {
@@ -112,11 +100,7 @@ async function openDmChannel(discordId, botToken) {
 
   if (!res.ok) {
     let detail = "";
-    try {
-      detail = await res.text();
-    } catch (_) {
-      /* เพิกเฉย */
-    }
+    try { detail = await res.text(); } catch (_) {}
     return { ok: false, status: res.status, detail };
   }
 
@@ -137,11 +121,7 @@ async function sendDm(channelId, content, botToken) {
   if (res.status === 200) return { ok: true };
 
   let detail = "";
-  try {
-    detail = await res.text();
-  } catch (_) {
-    /* เพิกเฉย */
-  }
+  try { detail = await res.text(); } catch (_) {}
   return { ok: false, status: res.status, detail };
 }
 
@@ -164,61 +144,41 @@ async function main() {
   }
   const db = getFirestore();
 
-  const snap = await db.collection(COLLECTION).get();
-
-  if (snap.empty) {
-    console.log("ไม่มีใบสมัครในระบบตอนนี้");
-    return;
-  }
+  // อ่านจาก cache แทน Firestore
+  const allData = loadLocalData();
 
   let notified = 0;
   let skipped = 0;
   let failed = 0;
 
-  for (const doc of snap.docs) {
-    const data = doc.data();
-    const discordId = doc.id;
-
-    // ข้ามเอกสารที่ไม่ใช่ใบสมัคร (เช่น answerkey:regular / answerkey:streamer
-    // ที่ไม่มีฟิลด์ status) และใบที่ยังไม่ผ่านการตรวจ (pending)
-    if (!data.status || data.status === "pending") {
-      continue;
-    }
-
-    // ยังไม่เคยตรวจจริง (ไม่มี reviewedAt) ข้ามไปก่อน
-    if (!data.reviewedAt) {
-      continue;
-    }
-
-    // เคยแจ้งเตือนผลตรวจรอบนี้ไปแล้ว (reviewedAt ไม่เปลี่ยน) ข้าม
+  for (const [discordId, data] of Object.entries(allData)) {
+    if (!data.status || data.status === "pending") continue;
+    if (!data.reviewedAt) continue;
     if (data.notifiedReviewedAt === data.reviewedAt) {
       skipped++;
       continue;
     }
 
     const content = buildMessageContent(data);
-    if (!content) {
-      // สถานะที่ไม่รู้จัก (ไม่ควรเกิดขึ้น) ข้ามไปเพื่อความปลอดภัย
-      continue;
-    }
+    if (!content) continue;
 
     console.log(`กำลังแจ้งเตือนสถานะ "${data.status}" ให้ ${discordId} ...`);
 
     const dm = await openDmChannel(discordId, botToken);
     if (!dm.ok) {
       const reason = explainError(dm.status);
-      await doc.ref.update({
+      await db.collection("applications").doc(discordId).update({
         notifyError: `${reason} (HTTP ${dm.status})`,
         notifyErrorAt: new Date().toISOString(),
       });
-      console.error(`  ✘ เปิด DM ไม่สำเร็จ: ${discordId} — ${reason} (HTTP ${dm.status}) ${dm.detail}`);
+      console.error(`  ✘ เปิด DM ไม่สำเร็จ: ${discordId} — ${reason} (HTTP ${dm.status})`);
       failed++;
       continue;
     }
 
     const sent = await sendDm(dm.channelId, content, botToken);
     if (sent.ok) {
-      await doc.ref.update({
+      await db.collection("applications").doc(discordId).update({
         notifiedReviewedAt: data.reviewedAt,
         notifiedStatus: data.status,
         notifiedAt: new Date().toISOString(),
@@ -228,11 +188,11 @@ async function main() {
       notified++;
     } else {
       const reason = explainError(sent.status);
-      await doc.ref.update({
+      await db.collection("applications").doc(discordId).update({
         notifyError: `${reason} (HTTP ${sent.status})`,
         notifyErrorAt: new Date().toISOString(),
       });
-      console.error(`  ✘ ส่ง DM ไม่สำเร็จ: ${discordId} — ${reason} (HTTP ${sent.status}) ${sent.detail}`);
+      console.error(`  ✘ ส่ง DM ไม่สำเร็จ: ${discordId} — ${reason} (HTTP ${sent.status})`);
       failed++;
     }
   }
@@ -242,7 +202,7 @@ async function main() {
   );
 
   if (failed > 0) {
-    process.exitCode = 1; // ทำให้ GitHub Actions ขึ้นสถานะแดง เตือนให้ทีมงานเข้ามาดู
+    process.exitCode = 1;
   }
 }
 
