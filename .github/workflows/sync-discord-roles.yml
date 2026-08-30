@@ -2,8 +2,8 @@ name: Sync approved Discord roles
 
 on:
   schedule:
-    # ตรวจสอบทุก 5 นาที
-    - cron: "*/5 * * * *"
+
+    - cron: "0 8,20 * * *"
   workflow_dispatch:
 
 permissions:
