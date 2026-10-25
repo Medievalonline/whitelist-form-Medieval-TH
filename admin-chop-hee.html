@@ -227,7 +227,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
           <button class="filter-btn" data-filter="all">ทั้งหมด*<span class="count-badge zero" id="count-all">0</span></button>
           <button class="filter-btn active" data-filter="pending">รอตรวจสอบ<span class="count-badge zero" id="count-pending">0</span></button>
           <button class="filter-btn" data-filter="approved">ผ่าน<span class="count-badge zero" id="count-approved">0</span></button>
-          <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอเซิฟเปิด<span class="count-badge zero" id="count-approved_waiting">0</span></button>
+          <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอยืนยันตัวตน<span class="count-badge zero" id="count-approved_waiting">0</span></button>
           <button class="filter-btn" data-filter="rejected">ไม่ผ่าน<span class="count-badge zero" id="count-rejected">0</span></button>
           <button class="filter-btn" data-filter="needs_revision">ต้องแก้ไข<span class="count-badge zero" id="count-needs_revision">0</span></button>
         </div>
@@ -415,7 +415,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
   const STATUS_LABELS = {
   pending: { label: 'รอตรวจสอบ', color: '#fff0be', bg: '#76520f' },
   approved: { label: 'ผ่านการพิจารณา', color: '#e5ffea', bg: '#1f6b3a' },
-  approved_waiting: { label: 'ผ่านแล้วรอเซิฟเปิด', color: '#123d1a', bg: '#b7f2b0' },
+  approved_waiting: { label: 'ผ่านแล้วรอยืนตันตัวตน', color: '#123d1a', bg: '#b7f2b0' },
   rejected: { label: 'ไม่ผ่านการพิจารณา', color: '#ffe8e8', bg: '#8b2020' },
   needs_revision: { label: 'ต้องแก้ไขก่อน', color: '#ffffff', bg: '#0f3a5c' }
   };
@@ -945,7 +945,7 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         // ทำแบบนี้ทุกครั้งไม่ว่ารอบใหม่จะให้สถานะอะไร (รวมถึงผ่าน/ผ่านรอเซิฟเปิด)
         // แก้บั๊กเดิม: โค้ดเขียนทับ adminComment/reviewedBy ตรงๆ ทุกครั้งที่บันทึก
         // ความเห็นของทีมงานรอบก่อนๆ เลยหายไปจากหน้า admin — เห็นชัดสุดตอนกด
-        // "ผ่าน"/"ผ่านแล้วรอเซิฟเปิด" เพราะเป็นสถานะปิดจ๊อบ ไม่มีการ resubmit
+        // "ผ่าน"/"ผ่านแล้วรอยืนยันตัวตน" เพราะเป็นสถานะปิดจ๊อบ ไม่มีการ resubmit
         // ให้กลับมาเห็นความเห็นเดิมได้อีกแล้ว
         const history = Array.isArray(record.reviewHistory) ? record.reviewHistory.slice() : [];
         if(record.reviewedBy){
