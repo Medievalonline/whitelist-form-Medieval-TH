@@ -226,8 +226,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
         <div class="filter-row" id="filterRow">
           <button class="filter-btn" data-filter="all">ทั้งหมด*<span class="count-badge zero" id="count-all">0</span></button>
           <button class="filter-btn active" data-filter="pending">รอตรวจสอบ<span class="count-badge zero" id="count-pending">0</span></button>
-          <button class="filter-btn" data-filter="approved">ผ่าน<span class="count-badge zero" id="count-approved">0</span></button>
-          <button class="filter-btn" data-filter="approved_waiting">ผ่านแล้วรอยืนยันตัวตน<span class="count-badge zero" id="count-approved_waiting">0</span></button>
+          <button class="filter-btn" data-filter="approved">ผ่านแล้วรอยืนยันตัวตน<span class="count-badge zero" id="count-approved">0</span></button>
+          <button class="filter-btn" data-filter="approved_waiting">ไม่ต้องให้ยศนี้<span class="count-badge zero" id="count-approved_waiting">0</span></button>
           <button class="filter-btn" data-filter="rejected">ไม่ผ่าน<span class="count-badge zero" id="count-rejected">0</span></button>
           <button class="filter-btn" data-filter="needs_revision">ต้องแก้ไข<span class="count-badge zero" id="count-needs_revision">0</span></button>
         </div>
@@ -414,8 +414,8 @@ textarea.admin-comment:focus, select:focus{ outline:none; border-color:var(--red
 
   const STATUS_LABELS = {
   pending: { label: 'รอตรวจสอบ', color: '#fff0be', bg: '#76520f' },
-  approved: { label: 'ผ่านการพิจารณา', color: '#e5ffea', bg: '#1f6b3a' },
-  approved_waiting: { label: 'ผ่านแล้วรอยืนตันตัวตน', color: '#123d1a', bg: '#b7f2b0' },
+  approved: { label: 'ผ่านแล้วรอยืนยันตัวตน', color: '#e5ffea', bg: '#1f6b3a' },
+  approved_waiting: { label: 'ยศนี้ไม่มีผล', color: '#123d1a', bg: '#b7f2b0' },
   rejected: { label: 'ไม่ผ่านการพิจารณา', color: '#ffe8e8', bg: '#8b2020' },
   needs_revision: { label: 'ต้องแก้ไขก่อน', color: '#ffffff', bg: '#0f3a5c' }
   };
