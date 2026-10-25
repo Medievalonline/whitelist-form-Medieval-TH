@@ -9,7 +9,7 @@ const { getFirestore } = require("firebase-admin/firestore");
 const fs = require("fs");
 
 const GUILD_ID = "1398750722501378158";
-const APPROVED_ROLE_ID = "1525260047779627109";
+const APPROVED_ROLE_ID = "1541879974028382259";
 
 const DISCORD_API = "https://discord.com/api/v10";
 const LOCAL_DATA_PATH = "/tmp/applications.json";
