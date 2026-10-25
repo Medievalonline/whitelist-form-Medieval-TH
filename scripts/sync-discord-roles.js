@@ -86,10 +86,9 @@ async function main() {
   let failed = 0;
 
   for (const [discordId, data] of entries) {
-    if (data.discordRoleSynced === true) {
-      skipped++;
-      continue;
-    }
+    // หมายเหตุ: ไม่ข้ามคนที่เคยมี discordRoleSynced = true
+    // เพราะ roleSyncPending จะเป็น true ก็ต่อเมื่อแอดมินกดอนุมัติใหม่
+    // (กรณีเปลี่ยน APPROVED_ROLE_ID ต้องแอดยศใหม่ให้คนเดิมได้)
 
     console.log(`กำลังแอดยศให้ ${discordId} ...`);
     const result = await addDiscordRole(discordId, botToken);
