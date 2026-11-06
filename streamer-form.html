@@ -514,7 +514,7 @@ footer{
             <div class="q-label" style="display:block; margin-top:18px;">ชื่อ-นามสกุล (IC)<span class="required-star">*</span></div>
             <div class="q-body"><input type="text" id="q4Name" placeholder="ชื่อ-นามสกุลของตัวละคร"></div>
             <div class="q-label" style="display:block; margin-top:18px;">อายุ (IC)<span class="required-star">*</span></div>
-            <div class="q-body"><input type="text" id="q4Age" placeholder="อายุของตัวละคร"></div>
+            <div class="q-body"><input type="text" id="q4Age" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="อายุของตัวละคร (ตัวเลขเท่านั้น)"></div>
           </div>
 
           <!-- Q5 -->
@@ -944,6 +944,15 @@ const Storage = {
   const successPanel = document.getElementById('successPanel');
 
   const textFieldIds = ['q4Name','q4Age','q5','q6','q7','q8','q9','q10'];
+
+  // ช่อง อายุ (IC): พิมพ์/วางได้เฉพาะตัวเลข 0-9 เท่านั้น
+  const q4AgeInput = document.getElementById('q4Age');
+  if(q4AgeInput){
+    q4AgeInput.addEventListener('input', function(){
+      const cleaned = this.value.replace(/[^0-9]/g, '');
+      if(this.value !== cleaned) this.value = cleaned;
+    });
+  }
 
   const questionLabels = {
     q4Name: 'ชื่อ-นามสกุล (IC)',
